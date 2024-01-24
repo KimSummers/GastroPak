@@ -1,11 +1,11 @@
-# ReadAndBarPlotBGACounts
+# ReadAndBarPlotEnvBGACounts
 #
 # Read in plate count data and barchart plot it
 # One bar char for the Salmonella counts and one for E. coli
 # and one for the coliforms
 # Group counts by river and order by site
 #
-# file ReadAndBarPlotBGACounts
+# file ReadAndBarPlotEnvBGACounts
 #
 # inputs
 # 	plateCountFile  - file containing plate count data
@@ -18,45 +18,44 @@
 # Version    Author       Date      Affiliation
 # 1.00       J K Summers  05/01/23  Wellington Lab - School of Life Sciences - University of Warwick
 
-ReadAndBarPlotBGACounts <- function(plateCountBGAFile, plotsDir, metaDataFile,
-                                    rawData, sedimentReps, waterReps) {
+ReadAndBarPlotEnvBGACounts <- function(plateCountEnvBGAFile, plotsDir, metaDataFile,
+                                       rawData, sedimentReps, waterReps) {
 
   library(tidyverse)
 
   # Read in data and put it in a dataframe
-  plateCountBGAData <- read_csv(plateCountBGAFile)
-  plateCountBGAData <- plateCountBGAData[1:279, ]
+  plateBGACountData <- read_csv(plateCountEnvBGAFile)
+  plateBGACountData <- plateBGACountData[1:279, ]
   metaData <- read.csv(metaDataFile)
 
-  plateCountBGAData <- numericCounts(plateCountBGAData)
+  plateBGACountData <- numericCounts(plateBGACountData)
 
-  waterData <- plateCountBGAData[plateCountBGAData$`Sample Type` == "Water", ]
-  sedimentData <- plateCountBGAData[plateCountBGAData$`Sample Type` == "Sediment", ]
+  waterData <- plateBGACountData[plateBGACountData$`Sample Type` == "Water", ]
+  sedimentData <- plateBGACountData[plateBGACountData$`Sample Type` == "Sediment", ]
 
   waterData <- fixMissingData(waterData, waterReps)
   sedimentData <- fixMissingData(sedimentData, sedimentReps)
 
-  plateCountBGAData <- rbind(waterData, sedimentData)
+  plateBGACountData <- rbind(waterData, sedimentData)
 
-  plateCountBGAData <- coloursToSpeciesBGA(plateCountBGAData)
-  plateCountBGAData <- addRivers(plateCountBGAData, metaData)
+  plateBGACountData <- coloursToSpeciesBGA(plateBGACountData)
+  plateBGACountData <- addRivers(plateBGACountData, metaData)
 
-  plateCountBGAData <- nameCols(plateCountBGAData)
+  plateBGACountData <- nameCols(plateBGACountData)
 
-  plateCountBGAData <- plateCountBGAData %>% relocate(E.coli,
+  plateBGACountData <- plateBGACountData %>% relocate(E.coli,
                                                       .after = Salmonella)
   bacteriaTypes <- c("Salmonella", "E.coli")
-  convertCols <- c(which(colnames(plateCountBGAData) == "Salmonella"),
-                   which(colnames(plateCountBGAData) == "E.coli"))
+  convertCols <- which(colnames(plateBGACountData) %in% bacteriaTypes)
 
-  waterData <- plateCountBGAData[plateCountBGAData$SampleType == "Water", ]
-  sedimentData <- plateCountBGAData[plateCountBGAData$SampleType == "Sediment", ]
+  waterData <- plateBGACountData[plateBGACountData$SampleType == "Water", ]
+  sedimentData <- plateBGACountData[plateBGACountData$SampleType == "Sediment", ]
 
   subPlateData <- averageCounts(waterData, waterReps, rawData, convertCols,
-                                bacteriaTypes)
+                                bacteriaTypes, "Env")
   subPlateData <- rbind(subPlateData, averageCounts(sedimentData, sedimentReps,
                                                     rawData, convertCols,
-                                                    bacteriaTypes))
+                                                    bacteriaTypes, "Env"))
 
   sampleCodes <- unique(subPlateData$SamplingCode)
   subPlateData$SamplingCode <- factor(subPlateData$SamplingCode,
@@ -65,11 +64,12 @@ ReadAndBarPlotBGACounts <- function(plateCountBGAFile, plotsDir, metaDataFile,
   sampleSites <- unique(subPlateData$SamplingSite)
   subPlateData$SamplingSite <- factor(subPlateData$SamplingSite,
                                       levels = sampleSites)
+
   sampleType <- unique(subPlateData$SampleType)
   subPlateData$SampleType <- factor(subPlateData$SampleType,
                                     levels = sampleType)
 
-  subPlateData <- subPlateData[order(subPlateData$SampleID), ]
+  subPlateData <- subPlateData[order(subPlateData$SamplingSite), ]
 
   for (iBacteria in 1:length(bacteriaTypes))
   {

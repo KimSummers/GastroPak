@@ -10,6 +10,7 @@
 #   rawData       - True if data is number of colonies, false for cfu / ml
 #   convertCols   - The columns with counts to be converted
 #   bacteriaTypes - Names of bacteria for which we have counts
+#   sampleType    - Type of sample
 #   campaignType  - "Env" for environmental, "HH" for household
 
 # Version    Author       Date      Affiliation
@@ -23,7 +24,15 @@ averageCounts <- function(countData, numDilutions, rawData, convertCols,
     countData <- convertCfuCounts(countData, numDilutions, convertCols)
   }
 
-  firstCols <- c(which(colnames(countData) == "SamplingCode"),
+  if (campaignType == "Env")
+  {
+    firstCols <- c(which(colnames(countData) == "SamplingCode"))
+  }else
+  {
+    firstCols <- c(which(colnames(countData) == "Sample-ID"))
+  }
+
+  firstCols <- c(firstCols,
                  which(colnames(countData) == "SamplingSite"),
                  which(colnames(countData) == "SampleType"),
                  which(colnames(countData) == "Replicate"))
@@ -53,8 +62,8 @@ averageCounts <- function(countData, numDilutions, rawData, convertCols,
 
       cfuPerml <- totalCfu / totalVol
 
-      newRow <- cbind(newRow, bacteriaTypes[iName], totalCfu, totalVol,
-                      cfuPerml)
+      newRow <- cbind(newRow, bacteriaTypes[iName], totalCfu,
+                      totalVol, cfuPerml)
 
       if (campaignType == "Env")
       {

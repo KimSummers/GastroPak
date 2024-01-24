@@ -40,10 +40,10 @@ ReadAndBarPlotHHSSACounts <- function(plateCountHHSSAFile, plotsDir, metaDataFil
   plateSSACountData <- coloursToSpeciesSSA(plateSSACountData)
   plateSSACountData <- addHouseholds(plateSSACountData, metaData)
 
-  plateSSACountData$`Sample-ID` <-
-    as.numeric(substr(plateSSACountData$`Sample-ID`, 5, 8))
-
   plateSSACountData <- nameCols(plateSSACountData)
+
+  plateSSACountData$SampleID <-
+    as.numeric(substr(plateSSACountData$SampleID, 5, 8))
 
   plateSSACountData <- plateSSACountData %>% relocate(Shigella,
                                                     .after = Salmonella)
@@ -64,17 +64,14 @@ ReadAndBarPlotHHSSACounts <- function(plateCountHHSSAFile, plotsDir, metaDataFil
                                                     rawData, convertCols,
                                                     bacteriaTypes, "HH"))
 
+  colnames(subPlateData)[which(colnames(subPlateData) == "Sample-ID")] <- "SampleID"
   subPlateData <- subPlateData[order(as.numeric(substr(subPlateData$Household,
                                                        11, length(subPlateData$Household))),
                                      subPlateData$SampleType,
                                      subPlateData$SampleID), ]
-  sampleNumbers <- unique(subPlateData$SampleID)
+  sampleIDs <- unique(subPlateData$SampleID)
   subPlateData$SampleID <- factor(subPlateData$SampleID,
-                                  levels = sampleNumbers)
-
-  sampleCodes <- unique(subPlateData$SamplingCode)
-  subPlateData$SamplingCode <- factor(subPlateData$SamplingCode,
-                                      levels = sampleCodes)
+                                     levels = sampleIDs)
 
   sampleSites <- unique(subPlateData$SamplingSite)
   subPlateData$SamplingSite <- factor(subPlateData$SamplingSite,
@@ -89,34 +86,10 @@ ReadAndBarPlotHHSSACounts <- function(plateCountHHSSAFile, plotsDir, metaDataFil
 
   for (iBacteria in 1:length(bacteriaTypes))
   {
-    bactSubData <- subBacteriaData(subPlateData, bacteriaTypes[iBacteria],
-                                   c("Water", "Stool"))
+    bactSubData <- subBacteriaHHData(subPlateData, bacteriaTypes[iBacteria],
+                                     c("Water", "Stool"))
 
-    for (iRow in (1:(nrow(bactSubData) / 3)))
-    {
-      meanVal <- mean(bactSubData$MeanCfu[bactSubData$SampleID ==
-                                            bactSubData$SampleID[iRow * 3]],
-                      na.rm = TRUE)
-      sdVal <- sd(bactSubData$MeanCfu[bactSubData$SampleID ==
-                                        bactSubData$SampleID[iRow * 3]],
-                  na.rm = TRUE)
-      sumDataRow <- cbind(bactSubData[iRow * 3, 1:8], meanVal, sdVal,
-                          bactSubData[iRow * 3, 10])
-
-      if (iRow == 1)
-      {
-        sumData <- sumDataRow
-      }else
-      {
-        sumData <- rbind(sumData, sumDataRow)
-      }
-
-    }
-
-    sumData$meanVal[sumData$meanVal == 0] <- NaN
-    colnames(sumData)[9:11] <- c("MeanCfu", "StdDev", "Household")
-
-    BarPlotGastroPak(sumData, c("Upstream", "Midstream", "Downstream"), "Sample",
+    BarPlotGastroPak(bactSubData, c("Upstream", "Midstream", "Downstream"), "Sample",
                      "HH", "Salmonella-Shigella agar plates", bacteriaTypes[iBacteria],
                      c('chocolate4', 'skyblue'), "B", 4, plotsDir,
                      bacteriaTypes[iBacteria])

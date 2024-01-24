@@ -24,7 +24,7 @@ ReadAndBarPlotBGACounts <- function(plateCountBGAFile, plotsDir,
   library(tidyverse)
 
   # Read in data and put it in a dataframe
-  plateBGACountData <- read_csv(plateCountBGAFile)
+  plateBGACountData <- read_csv(plateCountEnvBGAFile)
   plateBGACountData <- plateBGACountData[1:279, ]
   metaData <- read.csv(metaDataFile)
 
@@ -38,8 +38,8 @@ ReadAndBarPlotBGACounts <- function(plateCountBGAFile, plotsDir,
 
   plateBGACountData <- rbind(waterData, sedimentData)
 
-  plateCCCountData <- coloursToSpeciesCS(plateCCCountData)
-  plateCCCountData <- addRivers(plateCCCountData, metaData)
+  plateBGACountData <- coloursToSpeciesBGA(plateBGACountData)
+  plateBGACountData <- addRivers(plateBGACountData, metaData)
 
   plateBGACountData <- plateBGACountData %>% relocate(E.coli,
                                                       .after = Salmonella)

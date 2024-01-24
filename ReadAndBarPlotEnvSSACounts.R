@@ -1,15 +1,15 @@
-# ReadAndBarPlotSSACounts
+# ReadAndBarPlotEnvSSACounts
 #
 # Read in plate count data and barchart plot it
 # One bar char for the E. coli counts, one for Klebsiella, one for Salmonella / Shigella
 # and one for the coliforms
 # Group counts by river and order by site
 #
-# file ReadAndBarPlotSSACounts
+# file ReadAndBarPlotEnvSSACounts
 #
 # inputs
-# 	plateCountFile  - file containing plate count data
-#   plotsDir        - directory to store plots in
+# 	plateCountFile    - file containing plate count data
+#   plotsDir          - directory to store plots in
 #   metaDataFile      - file containing river meta data
 #   rawData           - True for absolute counts, false for cfu / ml
 #   sedimentReps      - Number of sediment dilutions
@@ -18,8 +18,8 @@
 # Version    Author       Date      Affiliation
 # 1.00       J K Summers  05/01/23  Wellington Lab - School of Life Sciences - University of Warwick
 
-ReadAndBarPlotSSACounts <- function(plateCountSSAFile, plotsDir, metaDataFile,
-                                    rawCounts, sedimentReps, waterReps) {
+ReadAndBarPlotEnvSSACounts <- function(plateCountSSAFile, plotsDir, metaDataFile,
+                                       rawCounts, sedimentReps, waterReps) {
 
   library(tidyverse)
 
@@ -51,14 +51,10 @@ ReadAndBarPlotSSACounts <- function(plateCountSSAFile, plotsDir, metaDataFile,
                    which(colnames(plateSSACountData) == "E.coli"))
 
   subPlateData <- averageCounts(waterData, waterReps, rawData, convertCols,
-                                bacteriaTypes)
+                                bacteriaTypes, "Env")
   subPlateData <- rbind(subPlateData, averageCounts(sedimentData, sedimentReps,
                                                     rawData, convertCols,
-                                                    bacteriaTypes))
-
-  sampleNumbers <- unique(subPlateData$SampleID)
-  subPlateData$SampleID <- factor(subPlateData$SampleID,
-                                     levels = sampleNumbers)
+                                                    bacteriaTypes, "Env"))
 
   sampleCodes <- unique(subPlateData$SamplingCode)
   subPlateData$SamplingCode <- factor(subPlateData$SamplingCode,
@@ -76,50 +72,8 @@ ReadAndBarPlotSSACounts <- function(plateCountSSAFile, plotsDir, metaDataFile,
 
   for (iBacteria in 1:length(bacteriaTypes))
   {
-    bactSubData <- subPlateData[subPlateData$Bacteria ==
-                                  bacteriaTypes[iBacteria], ]
-
-    for (iRow in (1:(nrow(bactSubData) / 6)))
-    {
-      meanVal <- mean(bactSubData$MeanCfu[(bactSubData$SamplingSite ==
-                                             bactSubData$SamplingSite[iRow * 6]) &
-                                            (bactSubData$SampleType == "Sediment")],
-                      na.rm = TRUE)
-      sdVal <- sd(bactSubData$MeanCfu[(bactSubData$SamplingSite ==
-                                         bactSubData$SamplingSite[iRow * 6]) &
-                                        (bactSubData$SampleType == "Sediment")],
-                  na.rm = TRUE)
-      sumDataRow <- cbind(bactSubData[iRow * 6, c(1, 3, 6)], "Sediment", meanVal,
-                          sdVal, bactSubData[iRow * 6, 10:11])
-
-      colnames(sumDataRow)[4] <- "SampleType"
-
-      if (iRow == 1)
-      {
-        sumData <- sumDataRow
-      }else
-      {
-        sumData <- rbind(sumData, sumDataRow)
-      }
-
-      meanVal <- mean(bactSubData$MeanCfu[(bactSubData$SamplingSite ==
-                                             bactSubData$SamplingSite[iRow * 6]) &
-                                            (bactSubData$SampleType == "Water")],
-                      na.rm = TRUE)
-      sdVal <- sd(bactSubData$MeanCfu[(bactSubData$SamplingSite ==
-                                         bactSubData$SamplingSite[iRow * 6]) &
-                                        (bactSubData$SampleType == "Water")],
-                  na.rm = TRUE)
-      sumDataRow <- cbind(bactSubData[iRow * 6, c(1, 3, 6)], "Water", meanVal,
-                          sdVal, bactSubData[iRow * 6, 10:11])
-
-      colnames(sumDataRow)[4] <- "SampleType"
-      sumData <- rbind(sumData, sumDataRow)
-    }
-
-    sumData$meanVal[sumData$meanVal == 0] <- NaN
-    sumData <- sumData[order(sumData$SamplingSite), ]
-    colnames(sumData)[5:8] <- c("MeanCfu", "StdDev", "River", "Location")
+    bactSubData <- subBacteriaEnvData(subPlateData, bacteriaTypes[iBacteria],
+                                      c("Water", "Stool"))
 
     BarPlotGastroPak(sumData, c("Upstream", "Midstream", "Downstream"), "Sample",
                      "Env", "Salmonella-Shigella agar plates", bacteriaTypes[iBacteria],

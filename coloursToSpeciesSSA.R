@@ -15,7 +15,8 @@ coloursToSpeciesSSA <- function(countData) {
   for (iRow in 1:nrow(countData))
   {
     eColiCount <- sum(countData$`Pink, Bile precipitate`[iRow],
-                      countData$`Red/Orange`[iRow])
+                      countData$`Red/Orange`[iRow],
+                      countData$`Red to Pink`[iRow])
 
     if (iRow == 1)
     {

@@ -18,7 +18,10 @@ numericCounts <- function(countData) {
     countData$`Black/Brown` <- as.numeric(countData$`Black/Brown`)
   }
 
-  countData$Colorless <- as.numeric(countData$Colorless)
+  if (!is_empty(which(colnames(countData) == "Colorless")))
+  {
+    countData$Colorless <- as.numeric(countData$Colorless)
+  }
 
   if (!is_empty(which(colnames(countData) == "Dark Blue")))
   {
@@ -40,7 +43,10 @@ numericCounts <- function(countData) {
     countData$`Partial Green` <- as.numeric(countData$`Partial Green`)
   }
 
-  countData$`Pink, Bile precipitate` <- as.numeric(countData$`Pink, Bile precipitate`)
+  if (!is_empty(which(colnames(countData) == "Pink, Bile precipitate")))
+  {
+    countData$`Pink, Bile precipitate` <- as.numeric(countData$`Pink, Bile precipitate`)
+  }
 
   if (!is_empty(which(colnames(countData) == "Purple/Voilet")))
   {
@@ -68,10 +74,41 @@ numericCounts <- function(countData) {
   }
 
   countData$Yellow <- as.numeric(countData$Yellow)
-  countData$`Colorless with Black center` <- as.numeric(countData$`Colorless with Black center`)
-  countData$`Colorless with Brown Center` <- as.numeric(countData$`Colorless with Brown Center`)
-  countData$`Colorless with Yellow center` <- as.numeric(countData$`Colorless with Yellow center`)
-  countData$White <- as.numeric(countData$White)
+
+  if (!is_empty(which(colnames(countData) == "Colorless with Black center")))
+  {
+    countData$`Colorless with Black center` <- as.numeric(countData$`Colorless with Black center`)
+  }
+
+  if (!is_empty(which(colnames(countData) == "Colorless with Brown Center")))
+  {
+    countData$`Colorless with Brown Center` <- as.numeric(countData$`Colorless with Brown Center`)
+  }
+
+  if (!is_empty(which(colnames(countData) == "Colorless with Yellow center")))
+  {
+    countData$`Colorless with Yellow center` <- as.numeric(countData$`Colorless with Yellow center`)
+  }
+
+  if (!is_empty(which(colnames(countData) == "White")))
+  {
+    countData$White <- as.numeric(countData$White)
+  }
+
+  if (!is_empty(which(colnames(countData) == "Red to Pinkish White")))
+  {
+    countData$`Red to Pink` <- as.numeric(countData$`Red to Pink`)
+  }
+
+  if (!is_empty(which(colnames(countData) == "Red to Pinkish White")))
+  {
+    countData$`Red to Pinkish White`<- as.numeric(countData$`Red to Pinkish White`)
+  }
+
+  if (!is_empty(which(colnames(countData) == "Colorless/ white")))
+  {
+    countData$`Colorless/ white`<- as.numeric(countData$`Colorless/ white`)
+  }
 
   countData$Total <- as.numeric(countData$Total)
 

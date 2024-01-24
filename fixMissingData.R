@@ -26,6 +26,14 @@ for (iRow in (1:(nrow(fixData) / fixCount)))
     fixData$`Sample Type`[((iRow - 1) * fixCount + 1)]
 }
 
+for (iRow in (1:(nrow(fixData) / fixCount)))
+{
+  fixData$`SamplingSite`[((iRow - 1) * fixCount + 2):((iRow - 1) * fixCount + fixCount)] <-
+    fixData$`SamplingSite`[((iRow - 1) * fixCount + 1)]
+  fixData$`SampleType`[((iRow - 1) * fixCount + 2):((iRow - 1) * fixCount + fixCount)] <-
+    fixData$`SampleType`[((iRow - 1) * fixCount + 1)]
+}
+
 for (iRow in (1:(nrow(fixData) / fixReps)))
 {
   fixData$`Sampling Code`[((iRow - 1) * fixReps + 2):((iRow - 1) * fixReps + fixReps)] <-

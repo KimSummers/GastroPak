@@ -1,4 +1,4 @@
-# subSampleData
+# subSampleEnvData
 #
 # Get data for sample type, including mean and sd values
 #
@@ -12,7 +12,7 @@
 # Version    Author       Date      Affiliation
 # 1.00       J K Summers  10/01/24  Wellington Lab - School of Life Sciences - University of Warwick
 
-subSampleData <- function(countData, sampleType, bacteriaTypes) {
+subSampleEnvData <- function(countData, sampleType, bacteriaTypes) {
 
   subData <- subPlateData[subPlateData$SampleType == sampleType, ]
   groupLength <- 3 * length(bacteriaTypes)
@@ -40,7 +40,7 @@ subSampleData <- function(countData, sampleType, bacteriaTypes) {
                           bacteriaTypes[iBacteria], meanVal, sdVal,
                           subData[iRow * groupLength, secondCols])
 
-      colnames(sumDataRow)[4] <- "Bacteria"
+      colnames(sumDataRow)[length(firstCols) + 1] <- "Bacteria"
 
       if ((iRow == 1) & (iBacteria == 1))
       {
@@ -57,7 +57,8 @@ subSampleData <- function(countData, sampleType, bacteriaTypes) {
   sumData$meanVal[sumData$meanVal == 0] <- NaN
   sumData$Bacteria <- factor(sumData$Bacteria, levels = unique(sumData$Bacteria))
   sumData <- sumData[order(sumData$SamplingSite), ]
-  colnames(sumData)[5:8] <- c("MeanCfu", "StdDev", "River", "Location")
+  colnames(sumData)[(length(firstCols) + 2):ncol(sumData)] <-
+    c("MeanCfu", "StdDev", "River", "Location")
 
   return(sumData)
 }

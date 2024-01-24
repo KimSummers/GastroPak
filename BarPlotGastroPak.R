@@ -28,34 +28,20 @@ BarPlotGastroPak <- function(graphData, xAxisLabels, plotType, dataType, mainDat
   library(ggplot2)
   library(pals)
 
-  if (dataType == "Env")
+  if (plotType == "Sample")
   {
-
-    if (plotType == "Sample")
-    {
-      gpPlot <- ggplot(data = graphData, aes(x = SamplingSite, y = MeanCfu,
-                                             fill = SampleType))
-    }else
-    {
-
-      if (plotType == "Species")
-      {
-        gpPlot <- ggplot(data = graphData, aes(x = SamplingSite, y = MeanCfu,
-                                              fill = Bacteria))
-      }else
-      {
-        gpPlot <- ggplot(data = graphData, aes(x = SamplingSite, y = meanVal,
-                                               fill = Media))
-      }
-
-    }
-
+    gpPlot <- ggplot(data = graphData, aes(x = SamplingSite, y = MeanCfu,
+                                           fill = SampleType))
   }else
   {
 
-    if (plotType == "Media")
+    if (plotType == "Species")
     {
-      gpPlot <- ggplot(data = graphData, aes(x = SampleID, y = meanVal,
+      gpPlot <- ggplot(data = graphData, aes(x = SamplingSite, y = MeanCfu,
+                                            fill = Bacteria))
+    }else
+    {
+      gpPlot <- ggplot(data = graphData, aes(x = SamplingSite, y = MeanCfu,
                                              fill = Media))
     }
 
@@ -63,18 +49,9 @@ BarPlotGastroPak <- function(graphData, xAxisLabels, plotType, dataType, mainDat
 
   gpPlot <- gpPlot + geom_bar(stat = "identity", position = "dodge")
 
-  if (dataType == "Env")
-  {
-    gpPlot <- gpPlot + geom_errorbar(aes(ymin = MeanCfu - StdDev,
-                                         ymax = MeanCfu + StdDev),
-                                     width = 0.2, position = position_dodge(.9))
-  }else
-  {
-    gpPlot <- gpPlot + geom_errorbar(aes(ymin = meanVal - sdVal,
-                                         ymax = meanVal + sdVal),
-                                     width = 0.2, position = position_dodge(.9))
-  }
-
+  gpPlot <- gpPlot + geom_errorbar(aes(ymin = MeanCfu - StdDev,
+                                       ymax = MeanCfu + StdDev),
+                                   width = 0.2, position = position_dodge(.9))
   gpPlot <- gpPlot +
     theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1, size = 8))
 

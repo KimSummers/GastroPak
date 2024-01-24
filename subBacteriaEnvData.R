@@ -1,4 +1,4 @@
-# subBacteriaData
+# subBacteriaEnvData
 #
 # Get data for bacteria type, including mean and sd values
 #
@@ -12,10 +12,10 @@
 # Version    Author       Date      Affiliation
 # 1.00       J K Summers  10/01/24  Wellington Lab - School of Life Sciences - University of Warwick
 
-subBacteriaData <- function(countData, bacteriaType, sampleTypes) {
+subBacteriaEnvData <- function(countData, bacteriaType, sampleTypes) {
 
   subData <- subPlateData[subPlateData$Bacteria == bacteriaType, ]
-  groupLength <- 3 * length(bacteriaTypes)
+  groupLength <- 3 * length(sampleTypes)
 
   firstCols <- c(which(colnames(subData) == "SamplingCode"),
                  which(colnames(subData) == "SamplingSite"),
@@ -26,23 +26,23 @@ subBacteriaData <- function(countData, bacteriaType, sampleTypes) {
   for (iRow in (1:(nrow(subData) / groupLength)))
   {
 
-    for (iBacteria in 1:length(bacteriaTypes))
+    for (iSample in 1:length(sampleTypes))
     {
       meanVal <- mean(subData$MeanCfu[(subData$SamplingSite ==
                                          subData$SamplingSite[iRow * groupLength]) &
-                                        (subData$Bacteria == bacteriaTypes[iBacteria])],
+                                        (subData$SampleType == sampleTypes[iSample])],
                       na.rm = TRUE)
       sdVal <- sd(subData$MeanCfu[(subData$SamplingSite ==
                                      subData$SamplingSite[iRow * groupLength]) &
-                                    (subData$Bacteria == bacteriaTypes[iBacteria])],
+                                    (subData$SampleType == sampleTypes[iSample])],
                   na.rm = TRUE)
       sumDataRow <- cbind(subData[iRow * groupLength, firstCols],
-                          bacteriaTypes[iBacteria], meanVal, sdVal,
+                          sampleTypes[iSample], meanVal, sdVal,
                           subData[iRow * groupLength, secondCols])
 
-      colnames(sumDataRow)[4] <- "Bacteria"
+      colnames(sumDataRow)[length(firstCols) + 1] <- "SampleType"
 
-      if ((iRow == 1) & (iBacteria == 1))
+      if ((iRow == 1) & (iSample == 1))
       {
         sumData <- sumDataRow
       }else
@@ -55,9 +55,10 @@ subBacteriaData <- function(countData, bacteriaType, sampleTypes) {
   }
 
   sumData$meanVal[sumData$meanVal == 0] <- NaN
-  sumData$Bacteria <- factor(sumData$Bacteria, levels = unique(sumData$Bacteria))
+  sumData$SampleType <- factor(sumData$SampleType, levels = unique(sumData$SampleType))
   sumData <- sumData[order(sumData$SamplingSite), ]
-  colnames(sumData)[5:8] <- c("MeanCfu", "StdDev", "River", "Location")
+  colnames(sumData)[(length(firstCols) + 2):ncol(sumData)] <-
+    c("MeanCfu", "StdDev", "River", "Location")
 
   return(sumData)
 }

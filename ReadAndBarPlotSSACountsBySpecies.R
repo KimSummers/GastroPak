@@ -57,10 +57,10 @@ ReadAndBarPlotBGACountsBySepecies <- function(plateCountSSAFile, plotsDir,
   sedimentData <- plateSSACountData[plateSSACountData$SampleType == "Sediment", ]
 
   subPlateData <- averageCounts(waterData, waterReps, rawData, convertCols,
-                                bacteriaTypes)
+                                bacteriaTypes, "Env")
   subPlateData <- rbind(subPlateData, averageCounts(sedimentData, sedimentReps,
                                                     rawData, convertCols,
-                                                    bacteriaTypes))
+                                                    bacteriaTypes, "Env"))
 
   sampleCodes <- unique(subPlateData$SamplingCode)
   subPlateData$SamplingCode <- factor(subPlateData$SamplingCode,
@@ -81,7 +81,7 @@ ReadAndBarPlotBGACountsBySepecies <- function(plateCountSSAFile, plotsDir,
 
   for (iSampleType in 1:length(sampleType))
   {
-    sumData <- subSampleData(subPlateData, sampleType[iSampleType], bacteriaTypes)
+    sumData <- subSampleEnvData(subPlateData, sampleType[iSampleType], bacteriaTypes)
 
     if (sampleType[iSampleType] == "Water")
     {

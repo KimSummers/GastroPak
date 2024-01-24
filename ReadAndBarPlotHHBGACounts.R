@@ -7,22 +7,20 @@
 # file ReadAndBarPlotHHBGACounts
 #
 # inputs
-# 	plateCountFile  - file containing plate count data
-#   plotsDir        - directory to store plots in
+# 	plateCountFile    - file containing plate count data
+#   plotsDir          - directory to store plots in
 #   metaDataFile      - file containing river meta data
 #   rawData           - True for absolute counts, false for cfu / ml
-#   sedimentReps      - Number of sediment dilutions
+#   stoolReps         - Number of stool dilutions
 #   waterReps         - Number of water dilutions
 
 # Version    Author       Date      Affiliation
 # 1.00       J K Summers  16/06/23  Wellington Lab - School of Life Sciences - University of Warwick
 
-ReadAndBarPlotHHSSACounts <- function(plateCountFile, plotsDir, metaDataFile,
-                                      rawData, sedimentReps, waterReps) {
+ReadAndBarPlotHHBGACounts <- function(plateCountFile, plotsDir, metaDataFile,
+                                      rawData, stoolReps, waterReps) {
 
   library(tidyverse)
-  library(scales)
-  library(ggplot2)
 
   # Read in data and put it in a dataframe
   plateBGACountData <- read_csv(plateCountHHBGAFile)
@@ -32,26 +30,20 @@ ReadAndBarPlotHHSSACounts <- function(plateCountFile, plotsDir, metaDataFile,
   plateBGACountData <- numericCounts(plateBGACountData)
 
   waterData <- plateBGACountData[plateBGACountData$`Sample Type` == "Water", ]
-  sedimentData <- plateBGACountData[plateBGACountData$`Sample Type` == "Sediment", ]
+  stoolData <- plateBGACountData[plateBGACountData$`Sample Type` == "Stool", ]
 
   waterData <- fixMissingData(waterData, waterReps)
-  sedimentData <- fixMissingData(sedimentData, sedimentReps)
+  stoolData <- fixMissingData(stoolData, stoolReps)
 
-  plateBGACountData <- rbind(waterData, sedimentData)
+  plateBGACountData <- rbind(waterData, stoolData)
 
-  plateBGACountData <- coloursToSpeciesCS(plateBGACountData)
-  plateBGACountData <- addHousehold(plateBGACountData, metaData)
-
-  plateBGACountData$`Sample-ID` <-
-    as.numeric(substr(plateBGACountData$`Sample-ID`, 5, 8))
+  plateBGACountData <- coloursToSpeciesBGA(plateBGACountData)
+  plateBGACountData <- addHouseholds(plateBGACountData, metaData)
 
   plateBGACountData <- nameCols(plateBGACountData)
-  colnames(plateBGACountData)[1] <- "SamplingCode"
-  colnames(plateBGACountData)[3] <- "SamplingSite"
-  colnames(plateBGACountData)[4] <- "SampleType"
-  colnames(plateBGACountData)[9] <- "E.coli"
-  colnames(plateBGACountData)[12] <- "Salmonella"
-  colnames(plateBGACountData)[13] <- "Household"
+
+  plateBGACountData$SampleID <-
+    as.numeric(substr(plateBGACountData$SampleID, 5, 8))
 
   plateBGACountData <- plateBGACountData %>% relocate(E.coli,
                                                       .after = Salmonella)
@@ -59,12 +51,17 @@ ReadAndBarPlotHHSSACounts <- function(plateCountFile, plotsDir, metaDataFile,
   bacteriaTypes <- c("Salmonella", "E.coli")
 
   waterData <- plateBGACountData[plateBGACountData$SampleType == "Water", ]
-  sedimentData <- plateBGACountData[plateBGACountData$SampleType == "Sediment", ]
+  stoolData <- plateBGACountData[plateBGACountData$SampleType == "Stool", ]
 
-  subPlateData <- averageCounts(waterData)
-  subPlateData <- rbind(subPlateData, sedimentData)
+  convertCols <- c(which(colnames(plateBGACountData) == "Salmonella"),
+                   which(colnames(plateBGACountData) == "E.coli"))
 
-  colnames(subPlateData)[2] <- "SampleID"
+  subPlateData <- averageCounts(waterData, waterReps, rawData, convertCols,
+                                bacteriaTypes, "HH")
+  subPlateData <- rbind(subPlateData, averageCounts(stoolData, stoolReps, rawData,
+                                                    convertCols, bacteriaTypes, "HH"))
+
+  colnames(subPlateData)[which(colnames(subPlateData) == "Sample-ID")] <- "SampleID"
 
   subPlateData <- subPlateData[order(as.numeric(substr(subPlateData$Household, 11,
                                                        length(subPlateData$Household))),
@@ -73,10 +70,6 @@ ReadAndBarPlotHHSSACounts <- function(plateCountFile, plotsDir, metaDataFile,
   sampleNumbers <- unique(subPlateData$SampleID)
   subPlateData$SampleID <- factor(subPlateData$SampleID,
                                   levels = sampleNumbers)
-
-  sampleCodes <- unique(subPlateData$SamplingCode)
-  subPlateData$SamplingCode <- factor(subPlateData$SamplingCode,
-                                      levels = sampleCodes)
 
   sampleSites <- unique(subPlateData$SamplingSite)
   subPlateData$SamplingSite <- factor(subPlateData$SamplingSite,
@@ -91,32 +84,8 @@ ReadAndBarPlotHHSSACounts <- function(plateCountFile, plotsDir, metaDataFile,
 
   for (iBacteria in 1:length(bacteriaTypes))
   {
-    bactSubData <- subPlateData[subPlateData$Bacteria ==
-                                  bacteriaTypes[iBacteria], ]
-
-    for (iRow in (1:(nrow(bactSubData) / 3)))
-    {
-      meanVal <- mean(bactSubData$MeanCfu[bactSubData$SampleID ==
-                                            bactSubData$SampleID[iRow * 3]],
-                      na.rm = TRUE)
-      sdVal <- sd(bactSubData$MeanCfu[bactSubData$SampleID ==
-                                        bactSubData$SampleID[iRow * 3]],
-                  na.rm = TRUE)
-      sumDataRow <- cbind(bactSubData[iRow * 3, 1:8], meanVal, sdVal,
-                          bactSubData[iRow * 3, 10])
-
-      if (iRow == 1)
-      {
-        sumData <- sumDataRow
-      }else
-      {
-        sumData <- rbind(sumData, sumDataRow)
-      }
-
-    }
-
-    sumData$meanVal[sumData$meanVal == 0] <- NaN
-    colnames(sumData)[9:11] <- c("MeanCfu", "StdDev", "Household")
+    bactSubData <- subBacteriaHHData(subPlateData, bacteriaTypes[iBacteria],
+                                     c("Water", "Stool"))
 
     bacteriaPlot <- ggplot(data = sumData, aes(x = SampleID, y = MeanCfu,
                                                fill = SampleType))

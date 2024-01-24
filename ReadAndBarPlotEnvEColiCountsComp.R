@@ -39,7 +39,8 @@ ReadAndBarPlotEnvEColiCountsComp <- function(plateCountEnvCSFile, plateCountEnvS
   # by this code that should be removed
   qPCRData <- read_csv(qPCRFile)
   # Only want E. coli stool samples
-  qPCRData <- na.omit(qPCRData)
+  qPCRData <- qPCRData[2:nrow(qPCRData), ]
+  #qPCRData <- na.omit(qPCRData)
   qPCRData <- qPCRData[(qPCRData$Target == "E. coli") & (qPCRData$Season == "Wet 22")
                        & (qPCRData$`Sample Type` == "Sediment") &
                          (qPCRData$`Test Country` == "UK"), ]
@@ -64,12 +65,18 @@ ReadAndBarPlotEnvEColiCountsComp <- function(plateCountEnvCSFile, plateCountEnvS
 
   bacteriaTypes <- c("E.coli", "coliforms", "Klebsiella")
 
+  convertCols <- c(which(colnames(plateCSCountData) == "E.coli"),
+                   which(colnames(plateCSCountData) == "coliforms"),
+                   which(colnames(plateCSCountData) == "Klebsiella"))
+
   waterData <- plateCSCountData[plateCSCountData$SampleType == "Water", ]
   sedimentData <- plateCSCountData[plateCSCountData$SampleType == "Sediment", ]
 
-  subPlateCSData <- averageCounts(waterData, waterReps, rawData, 17:19, bacteriaTypes)
+  subPlateCSData <- averageCounts(waterData, waterReps, rawData, convertCols,
+                                  bacteriaTypes, "Env")
   subPlateCSData <- rbind(subPlateCSData, averageCounts(sedimentData, sedimentReps,
-                                                        rawData, 17:19, bacteriaTypes))
+                                                        rawData, convertCols,
+                                                        bacteriaTypes, "Env"))
 
   subPlateCSData <- subPlateCSData[subPlateCSData$Bacteria == "E.coli", ]
 
@@ -91,21 +98,32 @@ ReadAndBarPlotEnvEColiCountsComp <- function(plateCountEnvCSFile, plateCountEnvS
   plateSSACountData <- coloursToSpeciesSSA(plateSSACountData)
   plateSSACountData <- addRivers(plateSSACountData, metaData)
 
-  colnames(plateSSACountData)[1] <- "SamplingCode"
-  colnames(plateSSACountData)[3] <- "SamplingSite"
-  colnames(plateSSACountData)[4] <- "SampleType"
-  colnames(plateSSACountData)[7] <- "Shigella"
-  colnames(plateSSACountData)[8] <- "Salmonella"
-  colnames(plateSSACountData)[9] <- "E.coli"
+  plateSSACountData <- nameCols(plateSSACountData)
 
   bacteriaTypes <- c("Shigella", "Salmonella", "E.coli")
 
   waterData <- plateSSACountData[plateSSACountData$SampleType == "Water", ]
   sedimentData <- plateSSACountData[plateSSACountData$SampleType == "Sediment", ]
 
-  subPlateSSAData <- averageCounts(waterData, waterReps, rawData, 7:9, bacteriaTypes)
+  for (iBacteria in 1:length(bacteriaTypes))
+  {
+
+    if (iBacteria == 1)
+    {
+      convertCols <- which(colnames(plateSSACountData) == bacteriaTypes[iBacteria])
+    }else
+    {
+      convertCols <- c(convertCols,
+                       which(colnames(plateSSACountData) == bacteriaTypes[iBacteria]))
+    }
+
+  }
+
+  subPlateSSAData <- averageCounts(waterData, waterReps, rawData, convertCols,
+                                   bacteriaTypes)
   subPlateSSAData <- rbind(subPlateSSAData, averageCounts(sedimentData, sedimentReps,
-                                                        rawData, 7:9, bacteriaTypes))
+                                                        rawData, convertCols,
+                                                        bacteriaTypes))
 
   subPlateSSAData <- subPlateSSAData[subPlateSSAData$Bacteria == "E.coli", ]
 

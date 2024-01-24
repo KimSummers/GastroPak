@@ -49,47 +49,70 @@ ReadAndBarPlotHHSalmonellaCountsComp <- function(plateCountHHSSAFile,
 
   # Add an extra column for the media type to each count table
   plateSSACountData <- cbind(plateSSACountData, rep("SSA", nrow(plateSSACountData)))
-  colnames(plateSSACountData)[15] <- "Media"
+  colnames(plateSSACountData)[ncol(plateSSACountData)] <- "Media"
 
   plateBGACountData <- cbind(plateBGACountData, rep("BGA", nrow(plateBGACountData)))
-  colnames(plateBGACountData)[12] <- "Media"
+  colnames(plateBGACountData)[ncol(plateBGACountData)] <- "Media"
 
-  qPCRData <- cbind(qPCRData, paste(qPCRData$Country, "qPCR"))
+  qPCRData <- cbind(qPCRData, paste(qPCRData$`Test Country`, "qPCR"))
   colnames(qPCRData)[ncol(qPCRData)] <- "Media"
 
-  # Now combine the sample data and salmonella counts across the plates into one new table
-  plateCountCombData <- rbind(plateSSACountData[c(2:6, 9, 15)],
-                              plateBGACountData[c(2:6, 9, 12)])
+  plateSSACountData <- nameCols(plateSSACountData)
+  plateBGACountData <- nameCols(plateBGACountData)
 
-  waterData <- plateCountCombData[plateCountCombData$`Sample Type` == "Water", ]
-  stoolData <- plateCountCombData[plateCountCombData$`Sample Type` == "Stool", ]
+  selSSACols <- c(which(colnames(plateSSACountData) == "SampleID"),
+                  which(colnames(plateSSACountData) == "SamplingSite"),
+                  which(colnames(plateSSACountData) == "SampleType"),
+                  which(colnames(plateSSACountData) == "Replicate"),
+                  which(colnames(plateSSACountData) == "Dilution"),
+                  which(colnames(plateSSACountData) == "Salmonella"),
+                  which(colnames(plateSSACountData) == "Media"))
+  selBGACols <- c(which(colnames(plateBGACountData) == "SampleID"),
+                  which(colnames(plateBGACountData) == "SamplingSite"),
+                  which(colnames(plateBGACountData) == "SampleType"),
+                  which(colnames(plateBGACountData) == "Replicate"),
+                  which(colnames(plateBGACountData) == "Dilution"),
+                  which(colnames(plateBGACountData) == "Salmonella"),
+                  which(colnames(plateBGACountData) == "Media"))
+
+  # Now combine the sample data and salmonella counts across the plates into one new table
+  plateCountCombData <- rbind(plateSSACountData[selSSACols],
+                              plateBGACountData[selBGACols])
+
+  waterData <- plateCountCombData[plateCountCombData$SampleType == "Water", ]
+  stoolData <- plateCountCombData[plateCountCombData$SampleType == "Stool", ]
 
   waterData <- fixMissingData(waterData, waterReps)
   stoolData <- fixMissingData(stoolData, stoolReps)
 
+  plateCountCombData <- rbind(waterData, stoolData)
   plateCountCombData <- addHouseholds(plateCountCombData, metaData)
 
-  colnames(qPCRData)[which(colnames(qPCRData) == "Sample")] <- "Sample-ID"
+  colnames(qPCRData)[which(colnames(qPCRData) == "Sample")] <- "SampleID"
   qPCRData <- addHouseholds(qPCRData, metaData)
 
   # Convert the sample ids into the numeric part for sorting
-  plateCountCombData$`Sample-ID` <-
-    as.numeric(substr(plateCountCombData$`Sample-ID`, 5, 8))
+  plateCountCombData$SampleID <-
+    as.numeric(substr(plateCountCombData$SampleID, 5, 8))
 
   # Amend the column names
-  colnames(plateCountCombData)[2] <- "SamplingSite"
-  colnames(plateCountCombData)[3] <- "SampleType"
-  colnames(plateCountCombData)[6] <- "CfuCount"
-  colnames(plateCountCombData)[8] <- "Household"
+  plateCountCombData <- nameCols(plateCountCombData)
+  colnames(plateCountCombData)[which(colnames(plateCountCombData) == "Salmonella")] <- "CfuCount"
 
   mediaTypes <- c("SSA", "BGA", "UK qPCR", "Pak qPCR")
 
   waterData <- plateCountCombData[plateCountCombData$SampleType == "Water", ]
   stoolData <- plateCountCombData[plateCountCombData$SampleType == "Stool", ]
 
-  subPlateData <- averageCounts(waterData)
-  subPlateData <- rbind(subPlateData, averageCounts(stoolData))
+  convertCols <- which(colnames(plateCountCombData) == "CfuCount")
 
+  subPlateData <- averageCounts(waterData, waterReps, rawData, convertCols,
+                                "CfuCount", "HH")
+  subPlateData <- rbind(subPlateData, averageCounts(stoolData, stoolReps,
+                                                    rawData, convertCols,
+                                                    "CfuCount", "HH"))
+
+  qPCRData <- nameCols(qPCRData)
   colnames(qPCRData)[1] <- "SampleID"
   colnames(qPCRData)[2] <- "SampleType"
   colnames(qPCRData)[5] <- "SamplingSite"

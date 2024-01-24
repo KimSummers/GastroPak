@@ -1,15 +1,15 @@
-# ReadAndBarPlotChromocultCounts
+# ReadAndBarPlotChromoSelectCounts
 #
 # Read in plate count data and barchart plot it
 # One bar char for the E. coli counts, one for Klebsiella, one for Salmonella / Shigella
 # and one for the coliforms
 # Group counts by river and order by site
 #
-# file ReadAndBarPlotChromocultCounts
+# file ReadAndBarPlotChromoSelectCounts
 #
 # inputs
-# 	plateCountCCFile  - file containing plate count data
-#   plotsDir        - directory to store plots in
+# 	plateCountCSFile  - file containing plate count data
+#   plotsDir          - directory to store plots in
 #   metaDataFile      - file containing river meta data
 #   rawData           - True for absolute counts, false for cfu / ml
 #   sedimentReps      - Number of sediment dilutions
@@ -18,48 +18,48 @@
 # Version    Author       Date      Affiliation
 # 1.00       J K Summers  15/12/22  Wellington Lab - School of Life Sciences - University of Warwick
 
-ReadAndBarPlotChromocultCounts <- function(plateCountCCFile, plotsDir,
-                                           metaDataFile, rawData,
-                                           sedimentReps, waterReps) {
+ReadAndBarPlotChromoSelectCounts <- function(plateCountEnvCSFile, plotsDir,
+                                             metaDataFile, rawData,
+                                             sedimentReps, waterReps) {
 
   library(tidyverse)
 
   # Read in data and put it in a dataframe
-  plateCCCountData <- read_csv(plateCountCCFile)
+  plateCSCountData <- read_csv(plateCountEnvCSFile)
   metaData <- read.csv(metaDataFile)
 
-  plateCCCountData <- numericCounts(plateCCCountData)
+  plateCSCountData <- numericCounts(plateCSCountData)
 
-  waterData <- plateCCCountData[plateCCCountData$`Sample Type` == "Water", ]
-  sedimentData <- plateCCCountData[plateCCCountData$`Sample Type` == "Sediment", ]
+  waterData <- plateCSCountData[plateCSCountData$`Sample Type` == "Water", ]
+  sedimentData <- plateCSCountData[plateCSCountData$`Sample Type` == "Sediment", ]
 
   waterData <- fixMissingData(waterData, waterReps)
   sedimentData <- fixMissingData(sedimentData, sedimentReps)
 
-  plateCCCountData <- rbind(waterData, sedimentData)
+  plateCSCountData <- rbind(waterData, sedimentData)
 
-  plateCCCountData <- coloursToSpeciesCS(plateCCCountData)
-  plateCCCountData <- addRivers(plateCCCountData, metaData)
+  plateCSCountData <- coloursToSpeciesCS(plateCSCountData)
+  plateCSCountData <- addRivers(plateCSCountData, metaData)
 
-  plateCCCountData <- nameCols(plateCCCountData)
+  plateCSCountData <- nameCols(plateCSCountData)
 
-  plateCCCountData <- plateCCCountData %>% relocate(Klebsiella,
+  plateCSCountData <- plateCSCountData %>% relocate(Klebsiella,
                                                     .after = coliforms)
 
-  convertCols <- c(which(colnames(plateCountData) == "E.coli"),
-                   which(colnames(plateCountData) == "coliforms"),
-                   which(colnames(plateCountData) == "Klebsiella"))
+  convertCols <- c(which(colnames(plateCSCountData) == "E.coli"),
+                   which(colnames(plateCSCountData) == "coliforms"),
+                   which(colnames(plateCSCountData) == "Klebsiella"))
 
   bacteriaTypes <- c("E.coli", "coliforms", "Klebsiella")
 
-  waterData <- plateCCCountData[plateCCCountData$`Sample Type` == "Water"]
-  sedimentData <- plateCCCountData[plateCCCountData$`Sample Type` == "Sediment"]
+  waterData <- plateCSCountData[plateCSCountData$`Sample Type` == "Water"]
+  sedimentData <- plateCSCountData[plateCSCountData$`Sample Type` == "Sediment"]
 
   subPlateData <- averageCounts(waterData, waterReps, rawData, convertCols,
-                                bacteriaTypes)
+                                bacteriaTypes, "Env")
   subPlateData <- rbind(subPlateData, averageCounts(sedimentData, sedimentReps,
                                                     rawData, convertCols,
-                                                    bacteriaTypes))
+                                                    bacteriaTypes, "Env"))
 
   colnames(subPlateData)[2] <- "SampleID"
 

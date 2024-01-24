@@ -28,8 +28,6 @@ ReadAndBarPlotHHEColiCountsComp <- function(plateCountHHCSFile, plateCountHHSSAF
 
   # First load any libraries needed
   library(tidyverse)
-  library(scales)
-  library(ggplot2)
 
   # Read in data and put it in dataframes
   plateCSCountData <- read_csv(plateCountHHCSFile)
@@ -40,7 +38,6 @@ ReadAndBarPlotHHEColiCountsComp <- function(plateCountHHCSFile, plateCountHHSSAF
   # by this code that should be removed
   qPCRData <- read_csv(qPCRFile)
   qPCRData <- qPCRData[2:nrow(qPCRData), ]
-  qPCRData <- qPCRData[qPCRData$Sample %in% samplesIDs, ]
   metaData <- read_csv(metaDataFile)
   metaData <- metaData[2:nrow(metaData), ]
 
@@ -57,50 +54,66 @@ ReadAndBarPlotHHEColiCountsComp <- function(plateCountHHCSFile, plateCountHHSSAF
 
   # Only want E. coli stool samples
   qPCRData <- qPCRData[(qPCRData$Target == "E. coli") & (qPCRData$Season == "Household"), ]
+  plateCSCountData <- nameCols(plateCSCountData)
+  plateBGACountData <- nameCols(plateBGACountData)
+  plateSSACountData <- nameCols(plateSSACountData)
 
   # Add an extra column for the media type to each count table
-  plateCCCountData <- cbind(plateCCCountData, rep("ChromoSelect", nrow(plateCCCountData)))
-  colnames(plateCCCountData)[19] <- "Media"
+  plateCSCountData <- cbind(plateCSCountData, rep("ChromoSelect", nrow(plateCSCountData)))
+  colnames(plateCSCountData)[ncol(plateCSCountData)] <- "Media"
 
   plateSSACountData <- cbind(plateSSACountData, rep("SSA", nrow(plateSSACountData)))
-  colnames(plateSSACountData)[9] <- colnames(plateCCCountData)[18]
-  colnames(plateSSACountData)[15] <- "Media"
+  colnames(plateSSACountData)[ncol(plateSSACountData)] <- "Media"
 
   plateBGACountData <- cbind(plateBGACountData, rep("BGA", nrow(plateBGACountData)))
-  colnames(plateBGACountData)[9] <- colnames(plateCCCountData)[18]
-  colnames(plateBGACountData)[12] <- "Media"
+  colnames(plateBGACountData)[ncol(plateBGACountData)] <- "Media"
 
   # qPCRData <- cbind(qPCRData, paste(qPCRData$Country, "qPCR"))
   qPCRData <- cbind(qPCRData, "qPCR")
   colnames(qPCRData)[ncol(qPCRData)] <- "Media"
 
+  selCSCols <- c(which(colnames(plateCSCountData) == "SampleID"),
+                 which(colnames(plateCSCountData) == "SamplingSite"),
+                 which(colnames(plateCSCountData) == "SampleType"),
+                 which(colnames(plateCSCountData) == "Replicate"),
+                 which(colnames(plateCSCountData) == "Dilution"),
+                 which(colnames(plateCSCountData) == "E.coli"),
+                 which(colnames(plateCSCountData) == "Media"))
+  selBGACols <- c(which(colnames(plateBGACountData) == "SampleID"),
+                  which(colnames(plateBGACountData) == "SamplingSite"),
+                  which(colnames(plateBGACountData) == "SampleType"),
+                  which(colnames(plateBGACountData) == "Replicate"),
+                  which(colnames(plateBGACountData) == "Dilution"),
+                  which(colnames(plateBGACountData) == "E.coli"),
+                  which(colnames(plateBGACountData) == "Media"))
+  selSSACols <- c(which(colnames(plateSSACountData) == "SampleID"),
+                  which(colnames(plateSSACountData) == "SamplingSite"),
+                  which(colnames(plateSSACountData) == "SampleType"),
+                  which(colnames(plateSSACountData) == "Replicate"),
+                  which(colnames(plateSSACountData) == "Dilution"),
+                  which(colnames(plateSSACountData) == "E.coli"),
+                  which(colnames(plateSSACountData) == "Media"))
   # Now combine the sample data and e. coli counts across the plates into one new table
-  plateCountCombData <- rbind(plateCCCountData[c(2:6, 18:19)],
-                              plateSSACountData[c(2:6, 9, 15)],
-                              plateBGACountData[c(2:6, 9, 12)])
+  plateCountCombData <- rbind(plateCSCountData[selCSCols],
+                              plateSSACountData[selSSACols],
+                              plateBGACountData[selBGACols])
 
-  waterData <- plateCountCombData[plateCountCombData$`Sample Type` == "Water", ]
-  stoolData <- plateCountCombData[plateCountCombData$`Sample Type` == "Stool", ]
+  waterData <- plateCountCombData[plateCountCombData$SampleType == "Water", ]
+  stoolData <- plateCountCombData[plateCountCombData$SampleType == "Stool", ]
 
   waterData <- fixMissingData(waterData, waterReps)
   stoolData <- fixMissingData(stoolData, stoolReps)
 
   plateCountCombData <- rbind(waterData, stoolData)
 
-  plateCountCombData <- addHousehold(plateCountCombData, metaData)
+  plateCountCombData <- addHouseholds(plateCountCombData, metaData)
 
-  colnames(qPCRData)[which(colnames(qPCRData) == "Sample")] <- "Sample-ID"
-  qPCRData <- addHousehold(qPCRData, metaData)
+  colnames(qPCRData)[which(colnames(qPCRData) == "Sample")] <- "SampleID"
+  qPCRData <- addHouseholds(qPCRData, metaData)
 
   # Convert the sample ids into the numeric part for sorting
-  plateCountCombData$`Sample-ID` <-
-    as.numeric(substr(plateCountCombData$`Sample-ID`, 5, 8))
-
-  # Amend the column names
-  colnames(plateCountCombData)[2] <- "SamplingSite"
-  colnames(plateCountCombData)[3] <- "SampleType"
-  colnames(plateCountCombData)[6] <- "CfuCount"
-  colnames(plateCountCombData)[8] <- "Household"
+  plateCountCombData$SampleID <-
+    as.numeric(substr(plateCountCombData$SampleID, 5, 8))
 
   mediaTypes <- c("ChromoSelect", "SSA", "BGA", "UK qPCR", "Pak qPCR")
 
