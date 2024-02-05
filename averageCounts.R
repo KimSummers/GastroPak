@@ -29,7 +29,7 @@ averageCounts <- function(countData, numDilutions, rawData, convertCols,
     firstCols <- c(which(colnames(countData) == "SamplingCode"))
   }else
   {
-    firstCols <- c(which(colnames(countData) == "Sample-ID"))
+    firstCols <- c(which(colnames(countData) == "SampleID"))
   }
 
   firstCols <- c(firstCols,
@@ -53,7 +53,7 @@ averageCounts <- function(countData, numDilutions, rawData, convertCols,
       for (iRep in 1:numDilutions)
       {
 
-        if (!is.na(countData[(iRow - 1) * numDilutions + 1, iBacteria]))
+        if (!is.na(countData[((iRow - 1) * numDilutions + iRep), iBacteria]))
         {
           totalVol <- totalVol + 10^(-iRep)
         }
@@ -68,7 +68,7 @@ averageCounts <- function(countData, numDilutions, rawData, convertCols,
       if (campaignType == "Env")
       {
           newRow <- cbind(newRow, countData$River[((iRow - 1) * numDilutions + 1)],
-                          countData$Location[((iRow - 1) * numDilutions + 1)])
+                          countData$RiverLocation[((iRow - 1) * numDilutions + 1)])
           colnames(newRow)[5:10] <- c("Bacteria", "Total colony count",
                                       "Total volume count", "MeanCfu", "River",
                                       "Location")

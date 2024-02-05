@@ -15,6 +15,7 @@ coloursToSpeciesSSA <- function(countData) {
   for (iRow in 1:nrow(countData))
   {
     eColiCount <- sum(countData$`Pink, Bile precipitate`[iRow],
+                      countData$`Pink Bile Precipitate`[iRow],
                       countData$`Red/Orange`[iRow],
                       countData$`Red to Pink`[iRow])
 
@@ -52,8 +53,8 @@ coloursToSpeciesSSA <- function(countData) {
   {
     salmonellaCount <- sum(countData$`Colorless with Black center`[iRow],
                            countData$`Colorless with Brown center`[iRow],
-                           countData$`Colorless with Yellow center`[iRow])
-
+                           countData$`Colorless with Yellow center`[iRow],
+                           countData$`Colorless with Black Centre`[iRow])
 
     if (iRow == 1)
     {

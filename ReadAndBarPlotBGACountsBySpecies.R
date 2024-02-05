@@ -1,10 +1,10 @@
-# ReadAndBarPlotBGACountsBySpecies
+# ReadAndBarPlotBGAEnvCountsBySpecies
 #
 # Read in plate count data and barchart plot it
 # One bar char for the Salmonella counts and one for E. coli
 # Group counts by river and order by site
 #
-# file ReadAndBarPlotBGACountsBySpecies
+# file ReadAndBarPlotBGAEnvCountsBySpecies
 #
 # inputs
 # 	plateCountBGAFile - file containing plate count data
@@ -17,15 +17,15 @@
 # Version    Author       Date      Affiliation
 # 1.00       J K Summers  17/07/23  Wellington Lab - School of Life Sciences - University of Warwick
 
-ReadAndBarPlotBGACounts <- function(plateCountBGAFile, plotsDir,
-                                    metaDataFile, rawData,
-                                    sedimentReps, waterReps) {
+ReadAndBarPlotBGAEnvCountsBySpecies <- function(plateCountBGAFile, plotsDir,
+                                                metaDataFile, rawData,
+                                                sedimentReps, waterReps) {
 
   library(tidyverse)
 
   # Read in data and put it in a dataframe
   plateBGACountData <- read_csv(plateCountEnvBGAFile)
-  plateBGACountData <- plateBGACountData[1:279, ]
+  plateBGACountData <- plateBGACountData[!is.na(plateBGACountData$`Sample Type`), ]
   metaData <- read.csv(metaDataFile)
 
   plateBGACountData <- numericCounts(plateBGACountData)
@@ -41,27 +41,22 @@ ReadAndBarPlotBGACounts <- function(plateCountBGAFile, plotsDir,
   plateBGACountData <- coloursToSpeciesBGA(plateBGACountData)
   plateBGACountData <- addRivers(plateBGACountData, metaData)
 
+  plateBGACountData <- nameCols(plateBGACountData)
+
   plateBGACountData <- plateBGACountData %>% relocate(E.coli,
                                                       .after = Salmonella)
-  convertCols <- c(which(colnames(plateCountData) == "Salmonella"),
-                   which(colnames(plateCountData) == "E.coli"))
-
   bacteriaTypes <- c("Salmonella", "E.coli")
+
+  convertCols <- which(colnames(plateBGACountData) %in% bacteriaTypes)
 
   waterData <- plateBGACountData[plateBGACountData$SampleType == "Water", ]
   sedimentData <- plateBGACountData[plateBGACountData$SampleType == "Sediment", ]
 
   subPlateData <- averageCounts(waterData, waterReps, rawData, convertCols,
-                                bacteriaTypes)
+                                bacteriaTypes, "Env")
   subPlateData <- rbind(subPlateData, averageCounts(sedimentData, sedimentReps,
                                                     rawData, convertCols,
-                                                    bacteriaTypes))
-
-  colnames(subPlateData)[2] <- "SampleID"
-
-  sampleNumbers <- unique(subPlateData$SampleID)
-  subPlateData$SampleID <- factor(subPlateData$SampleID,
-                                  levels = sampleNumbers)
+                                                    bacteriaTypes, "Env"))
 
   sampleCodes <- unique(subPlateData$SamplingCode)
   subPlateData$SamplingCode <- factor(subPlateData$SamplingCode,
@@ -74,54 +69,24 @@ ReadAndBarPlotBGACounts <- function(plateCountBGAFile, plotsDir,
   subPlateData$SampleType <- factor(subPlateData$SampleType,
                                     levels = sampleType)
 
-  subPlateData <- subPlateData[order(subPlateData$SampleID, subPlateData$Bacteria), ]
+  subPlateData <- subPlateData[order(subPlateData$SamplingCode, subPlateData$Bacteria), ]
 
   for (iSampleType in 1:length(sampleType))
   {
-    sampleSubData <- subPlateData[subPlateData$SampleType ==
-                                    sampleType[iSampleType], ]
-    groupLength <- 3 * length(bacteriaTypes)
+    sumData <- subSampleEnvData(subPlateData, sampleType[iSampleType], bacteriaTypes)
 
-    for (iRow in (1:(nrow(sampleSubData) / groupLength)))
+    if (sampleType[iSampleType] == "Water")
     {
-
-      for (iBacteria in 1:length(bacteriaTypes))
-      {
-        meanVal <- mean(sampleSubData$MeanCfu[(sampleSubData$SamplingSite ==
-                                                 sampleSubData$SamplingSite[iRow * groupLength]) &
-                                                (sampleSubData$Bacteria == bacteriaTypes[iBacteria])],
-                        na.rm = TRUE)
-        sdVal <- sd(sampleSubData$MeanCfu[(sampleSubData$SamplingSite ==
-                                             sampleSubData$SamplingSite[iRow * groupLength]) &
-                                            (sampleSubData$Bacteria == bacteriaTypes[iBacteria])],
-                    na.rm = TRUE)
-        sumDataRow <- cbind(sampleSubData[iRow * groupLength, c(1, 3, 4)],
-                            bacteriaTypes[iBacteria], meanVal, sdVal,
-                            sampleSubData[iRow * groupLength, 10:11])
-
-        colnames(sumDataRow)[4] <- "Bacteria"
-
-        if ((iRow == 1) & (iBacteria == 1))
-        {
-          sumData <- sumDataRow
-        }else
-        {
-          sumData <- rbind(sumData, sumDataRow)
-        }
-
-      }
-
+      measureType = "V"
+    }else
+    {
+      measureType = "W"
     }
-
-    sumData$meanVal[sumData$meanVal == 0] <- NaN
-    sumData$Bacteria <- factor(sumData$Bacteria, levels = unique(sumData$Bacteria))
-    sumData <- sumData[order(sumData$SamplingSite), ]
-    colnames(sumData)[5:8] <- c("MeanCfu", "StdDev", "River", "Location")
 
     BarPlotGastroPak(sumData, c("Upstream", "Midstream", "Downstream"), "Species",
                      "Env", "Brilliant green agar", sampleType[iSampleType],
-                     c('palevioletred', 'yellowgreen'), 3, plotDir,
-                     sampleType[iSampleType])
+                     c('palevioletred', 'yellowgreen'), measureType, 3, plotsDir,
+                     paste("BGA", sampleType[iSampleType]))
   }
 
 }

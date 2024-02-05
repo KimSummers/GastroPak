@@ -39,11 +39,12 @@ ReadAndBarPlotEnvEColiCountsComp <- function(plateCountEnvCSFile, plateCountEnvS
   # by this code that should be removed
   qPCRData <- read_csv(qPCRFile)
   # Only want E. coli stool samples
-  qPCRData <- qPCRData[2:nrow(qPCRData), ]
-  #qPCRData <- na.omit(qPCRData)
+  qPCRData <- qPCRData[!is.na(qPCRData$Target), ]
+
+  qPCRData <- nameCols(qPCRData)
   qPCRData <- qPCRData[(qPCRData$Target == "E. coli") & (qPCRData$Season == "Wet 22")
-                       & (qPCRData$`Sample Type` == "Sediment") &
-                         (qPCRData$`Test Country` == "UK"), ]
+                       & (qPCRData$SampleType == "Sediment") &
+                         (qPCRData$TestCountry == "UK"), ]
 
   plateCSCountData <- numericCounts(plateCSCountData)
 
@@ -65,9 +66,7 @@ ReadAndBarPlotEnvEColiCountsComp <- function(plateCountEnvCSFile, plateCountEnvS
 
   bacteriaTypes <- c("E.coli", "coliforms", "Klebsiella")
 
-  convertCols <- c(which(colnames(plateCSCountData) == "E.coli"),
-                   which(colnames(plateCSCountData) == "coliforms"),
-                   which(colnames(plateCSCountData) == "Klebsiella"))
+  convertCols <- which(colnames(plateCSCountData) %in% bacteriaTypes)
 
   waterData <- plateCSCountData[plateCSCountData$SampleType == "Water", ]
   sedimentData <- plateCSCountData[plateCSCountData$SampleType == "Sediment", ]

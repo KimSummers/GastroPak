@@ -14,26 +14,29 @@
 
 subBacteriaHHData <- function(countData, bacteriaType, sampleTypes) {
 
+  subData <- subPlateData[subPlateData$Bacteria == bacteriaType, ]
+  groupLength <- 3 * length(sampleTypes)
+
   firstCols <- c(which(colnames(countData) == "SampleID"),
                  which(colnames(countData) == "SamplingSite"))
   secondCols <- c(which(colnames(countData) == "Household"))
 
-  for (iSample in 1:length(sampleTypes))
+  for (iRow in (1:(nrow(subData) / groupLength)))
   {
-    subData <- countData[(countData$Bacteria == bacteriaType) &
-                           (countData$SampleType == sampleTypes[iSample]), ]
 
-    for (iRow in (1:(nrow(subData) / 3)))
+    for (iSample in 1:length(sampleTypes))
     {
-      meanVal <- mean(subData$MeanCfu[subData$SampleID ==
-                                         subData$SampleID[iRow * 3]],
+      meanVal <- mean(subData$MeanCfu[(subData$SampleID ==
+                                        subData$SampleID[iRow * groupLength]) &
+                                        (subData$SampleType == sampleTypes[iSample])],
                       na.rm = TRUE)
-      sdVal <- sd(subData$MeanCfu[subData$SampleID ==
-                                     subData$SampleID[iRow * 3]],
+      sdVal <- sd(subData$MeanCfu[(subData$SampleID ==
+                                     subData$SampleID[iRow * groupLength]) &
+                                    (subData$SampleType == sampleTypes[iSample])],
                   na.rm = TRUE)
-      sumDataRow <- cbind(subData[iRow * 3, firstCols],
+      sumDataRow <- cbind(subData[iRow * groupLength, firstCols],
                           sampleTypes[iSample], meanVal, sdVal,
-                          subData[iRow * 3, secondCols])
+                          subData[iRow * groupLength, secondCols])
 
       colnames(sumDataRow)[length(firstCols) + 1] <- "SampleType"
 
@@ -49,8 +52,10 @@ subBacteriaHHData <- function(countData, bacteriaType, sampleTypes) {
 
   }
 
+  sumData$meanVal[sumData$meanVal == 0] <- NaN
   sumData$SampleType <- factor(sumData$SampleType, levels = unique(sumData$SampleType))
-  colnames(sumData)[(length(firstCols) + 2):ncol(sumData)] <- c("MeanCfu", "StdDev", "Household")
+  colnames(sumData)[(length(firstCols) + 2):ncol(sumData)] <-
+    c("MeanCfu", "StdDev", "Household")
 
   return(sumData)
 }

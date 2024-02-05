@@ -25,7 +25,6 @@ ReadAndBarPlotEnvBGACounts <- function(plateCountEnvBGAFile, plotsDir, metaDataF
 
   # Read in data and put it in a dataframe
   plateBGACountData <- read_csv(plateCountEnvBGAFile)
-  plateBGACountData <- plateBGACountData[1:279, ]
   metaData <- read.csv(metaDataFile)
 
   plateBGACountData <- numericCounts(plateBGACountData)
@@ -73,105 +72,13 @@ ReadAndBarPlotEnvBGACounts <- function(plateCountEnvBGAFile, plotsDir, metaDataF
 
   for (iBacteria in 1:length(bacteriaTypes))
   {
-    bactSubData <- subPlateData[subPlateData$Bacteria ==
-                                  bacteriaTypes[iBacteria], ]
+    bactSubData <- subBacteriaEnvData(subPlateData, bacteriaTypes[iBacteria],
+                                      c("Stool", "Water"))
 
-    for (iRow in (1:(nrow(bactSubData) / 6)))
-    {
-      meanVal <- mean(bactSubData$MeanCfu[(bactSubData$SamplingSite ==
-                                             bactSubData$SamplingSite[iRow * 6]) &
-                                            (bactSubData$SampleType == "Sediment")],
-                      na.rm = TRUE)
-      sdVal <- sd(bactSubData$MeanCfu[(bactSubData$SamplingSite ==
-                                         bactSubData$SamplingSite[iRow * 6]) &
-                                        (bactSubData$SampleType == "Sediment")],
-                  na.rm = TRUE)
-      sumDataRow <- cbind(bactSubData[iRow * 6, c(1,3,6)], "Sediment", meanVal,
-                          sdVal, bactSubData[iRow * 6, 10:11])
-
-      colnames(sumDataRow)[4] <- "SampleType"
-
-      if (iRow == 1)
-      {
-        sumData <- sumDataRow
-      }else
-      {
-        sumData <- rbind(sumData, sumDataRow)
-      }
-
-      meanVal <- mean(bactSubData$MeanCfu[(bactSubData$SamplingSite ==
-                                             bactSubData$SamplingSite[iRow * 6]) &
-                                            (bactSubData$SampleType == "Water")],
-                      na.rm = TRUE)
-      sdVal <- sd(bactSubData$MeanCfu[(bactSubData$SamplingSite ==
-                                         bactSubData$SamplingSite[iRow * 6]) &
-                                        (bactSubData$SampleType == "Water")],
-                  na.rm = TRUE)
-      sumDataRow <- cbind(bactSubData[iRow * 6, c(1,3,6)], "Water", meanVal,
-                          sdVal, bactSubData[iRow * 6, 10:11])
-
-      colnames(sumDataRow)[4] <- "SampleType"
-      sumData <- rbind(sumData, sumDataRow)
-    }
-
-    sumData$meanVal[sumData$meanVal == 0] <- NaN
-    sumData <- sumData[order(sumData$SamplingSite), ]
-    colnames(sumData)[5:8] <- c("MeanCfu", "StdDev", "River", "Location")
-
-    bacteriaPlot <- ggplot(data = sumData, aes(x = SamplingSite, y = MeanCfu,
-                                               fill = SampleType))
-    bacteriaPlot <- bacteriaPlot + geom_bar(stat = "identity",
-                                            position = "dodge")
-    bacteriaPlot <- bacteriaPlot +
-      geom_errorbar(aes(ymin = MeanCfu - StdDev, ymax = MeanCfu + StdDev),
-                    width = 0.2, position = position_dodge(.9))
-
-    bacteriaPlot <- bacteriaPlot + theme(axis.text.x = element_text(size = 8))
-
-    bacteriaPlot <- bacteriaPlot +
-      theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1,
-                                       size = 12))
-    bacteriaPlot <- bacteriaPlot + labs(y = bquote('Mean cfu '~ml^-1),
-                                        title = paste("Brilliant green plates ",
-                                                      bacteriaTypes[iBacteria],
-                                                      sep = ""),
-                                        fill = "Sample Type")
-    bacteriaPlot <- bacteriaPlot + facet_wrap( ~ River, ncol = 3,
-                                               scales = "free_x")
-    bacteriaPlot <- bacteriaPlot +
-      theme(strip.background = element_rect(fill = "white", colour = "grey"),
-            strip.text = element_text(size = 8, colour = "black"))
-
-    bacteriaPlot <- bacteriaPlot +
-      theme(panel.background = element_rect(fill = "white",
-                                            colour = "grey",
-                                            size = 0.5, linetype = "solid"))
-    bacteriaPlot <- bacteriaPlot +
-      theme(panel.grid.major.x = element_blank(),
-            panel.grid.minor.x = element_blank(),
-            panel.grid.major.y = element_line(size = .5, color = "grey"),
-            panel.grid.minor.y = element_line(size = .2, color = "grey"))
-
-    bacteriaPlot <- bacteriaPlot + theme(axis.title.y = element_text(size = 12))
-    bacteriaPlot <- bacteriaPlot + theme(axis.title.x = element_blank())
-    bacteriaPlot <- bacteriaPlot + theme(plot.title = element_text(size = 14,
-                                                                   hjust = 0.5))
-    bacteriaPlot <- bacteriaPlot + theme(legend.title = element_text(size = 10),
-                                         legend.text = element_text(size = 8))
-
-    bacteriaPlot <- bacteriaPlot + theme(axis.text.y = element_text(size = 8))
-
-    bacteriaPlot <- bacteriaPlot +
-      scale_fill_manual(values = c('chocolate4', 'skyblue'))
-    bacteriaPlot <- bacteriaPlot + scale_y_continuous(trans = 'log10')
-    bacteriaPlot <- bacteriaPlot + scale_x_discrete(labels = c("Upstream",
-                                                               "Midstream",
-                                                               "Downstream"))
-
-    bacteriaPlot
-    ggsave(paste(plotsDir, bacteriaTypes[iBacteria], ".pdf", sep = ""),
-           bacteriaPlot, width = 5, height = 6)
-
+    BarPlotGastroPak(bactSubData, c("Upstream", "Midstream", "Downstream"), "Sample",
+                     "Env", "Brilliant Green Agar Plates", bacteriaTypes[iBacteria],
+                     c('chocolate4', 'skyblue'), "B", 3, plotsDir,
+                     paste("BBA", bacteriaTypes[iBacteria]))
   }
 
 }

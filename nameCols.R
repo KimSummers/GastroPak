@@ -14,14 +14,20 @@ nameCols <- function(countData) {
 
   colnames(countData)[which(colnames(countData) == "Sample-ID")] <- "SampleID"
   colnames(countData)[which(colnames(countData) == "Sample ID")] <- "SampleID"
+  colnames(countData)[which(colnames(countData) == "Sample")] <- "SampleID"
   colnames(countData)[which(colnames(countData) == "Sampling Code")] <- "SamplingCode"
   colnames(countData)[which(colnames(countData) == "Sampling Site")] <- "SamplingSite"
+  colnames(countData)[which(colnames(countData) == "Location")] <- "SamplingSite"
   colnames(countData)[which(colnames(countData) == "Sample Type")] <- "SampleType"
+  colnames(countData)[which(colnames(countData) == "Type")] <- "SampleType"
   colnames(countData)[which(colnames(countData) == "Light Pink")] <- "Klebsiella"
   colnames(countData)[which(colnames(countData) == "coliformCounts")] <- "coliforms"
   colnames(countData)[which(colnames(countData) == "eColiCounts")] <- "E.coli"
   colnames(countData)[which(colnames(countData) == "salmonellaCounts")] <- "Salmonella"
   colnames(countData)[which(colnames(countData) == "shigellaCounts")] <- "Shigella"
+  colnames(countData)[which(colnames(countData) == "Test Country")] <- "TestCountry"
+  colnames(countData)[which(colnames(countData) == "Country")] <- "TestCountry"
+  colnames(countData)[which(colnames(countData) == "Gene copies in sample")] <- "MeanCfu"
 
   return(countData)
 }

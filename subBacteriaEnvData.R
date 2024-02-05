@@ -14,7 +14,7 @@
 
 subBacteriaEnvData <- function(countData, bacteriaType, sampleTypes) {
 
-  subData <- subPlateData[subPlateData$Bacteria == bacteriaType, ]
+  subData <- countData[countData$Bacteria == bacteriaType, ]
   groupLength <- 3 * length(sampleTypes)
 
   firstCols <- c(which(colnames(subData) == "SamplingCode"),

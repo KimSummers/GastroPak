@@ -30,7 +30,7 @@ addRivers <- function(countData, metaData) {
 
   countData <- cbind(countData, rivers)
   colnames(countData)[ncol(countData) - 1] <- "River"
-  colnames(countData)[ncol(countData)] <- "Location"
+  colnames(countData)[ncol(countData)] <- "RiverLocation"
 
   return(countData)
 }

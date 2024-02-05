@@ -25,7 +25,7 @@ ReadAndBarPlotHHBGACounts <- function(plateCountFile, plotsDir, metaDataFile,
   # Read in data and put it in a dataframe
   plateBGACountData <- read_csv(plateCountHHBGAFile)
   metaData <- read_csv(metaDataFile)
-  metaData <- metaData[2:nrow(metaData), ]
+  metaData <- metaData[!is.na(metaData$`Sample code`), ]
 
   plateBGACountData <- numericCounts(plateBGACountData)
 
@@ -53,15 +53,12 @@ ReadAndBarPlotHHBGACounts <- function(plateCountFile, plotsDir, metaDataFile,
   waterData <- plateBGACountData[plateBGACountData$SampleType == "Water", ]
   stoolData <- plateBGACountData[plateBGACountData$SampleType == "Stool", ]
 
-  convertCols <- c(which(colnames(plateBGACountData) == "Salmonella"),
-                   which(colnames(plateBGACountData) == "E.coli"))
+  convertCols <- which(colnames(plateBGACountData) %in% bacteriaTypes)
 
   subPlateData <- averageCounts(waterData, waterReps, rawData, convertCols,
                                 bacteriaTypes, "HH")
   subPlateData <- rbind(subPlateData, averageCounts(stoolData, stoolReps, rawData,
                                                     convertCols, bacteriaTypes, "HH"))
-
-  colnames(subPlateData)[which(colnames(subPlateData) == "Sample-ID")] <- "SampleID"
 
   subPlateData <- subPlateData[order(as.numeric(substr(subPlateData$Household, 11,
                                                        length(subPlateData$Household))),
@@ -87,55 +84,10 @@ ReadAndBarPlotHHBGACounts <- function(plateCountFile, plotsDir, metaDataFile,
     bactSubData <- subBacteriaHHData(subPlateData, bacteriaTypes[iBacteria],
                                      c("Water", "Stool"))
 
-    bacteriaPlot <- ggplot(data = sumData, aes(x = SampleID, y = MeanCfu,
-                                               fill = SampleType))
-    bacteriaPlot <- bacteriaPlot + geom_bar(stat = "identity", position = "dodge")
-    bacteriaPlot <- bacteriaPlot +
-      geom_errorbar(aes(ymin = MeanCfu - sdVal, ymax = MeanCfu + sdVal), width = 0.2)
-    bacteriaPlot <- bacteriaPlot + theme(axis.text.x = element_text(size = 8))
-    #  bacteriaPlot <- bacteriaPlot + labs(y = bquote('Mean cfu '~ml^-1),
-    #                                      title = paste("Brilliant green plates ",
-    #                                                    bacteriaTypes[iBacteria],
-    #                                                    sep = ""),
-    #                                      fill = "Sample Type")
-    bacteriaPlot <- bacteriaPlot + labs(y = "Mean cfu / ml (water) or cfu / 0.1 g (faeces)",
-                                        title = paste("Brilliant green plates ",
-                                                      bacteriaTypes[iBacteria],
-                                                      sep = ""),
-                                        fill = "Sample Type")
-    bacteriaPlot <- bacteriaPlot + facet_wrap( ~ Household, ncol = 4,
-                                               scales = "free_x")
-    bacteriaPlot <- bacteriaPlot +
-      theme(strip.background = element_rect(fill = "white", colour = "grey"),
-            strip.text = element_text(size = 8, colour = "black"))
-
-    bacteriaPlot <- bacteriaPlot +
-      theme(panel.background = element_rect(fill = "white",
-                                            colour = "grey",
-                                            size = 0.5, linetype = "solid"))
-    bacteriaPlot <- bacteriaPlot +
-      theme(panel.grid.major.x = element_blank(),
-            panel.grid.minor.x = element_blank(),
-            panel.grid.major.y = element_line(size = .5, color = "grey"),
-            panel.grid.minor.y = element_line(size = .2, color = "grey"))
-
-    bacteriaPlot <- bacteriaPlot + theme(axis.title.y = element_text(size = 12))
-    bacteriaPlot <- bacteriaPlot + theme(axis.title.x = element_blank())
-    bacteriaPlot <- bacteriaPlot + theme(plot.title = element_text(size = 14,
-                                                                   hjust = 0.5))
-    bacteriaPlot <- bacteriaPlot + theme(legend.title = element_text(size = 10),
-                                         legend.text = element_text(size = 8))
-
-    bacteriaPlot <- bacteriaPlot + theme(axis.text.y = element_text(size = 8))
-
-    bacteriaPlot <- bacteriaPlot +
-      scale_fill_manual(values = c('chocolate4', 'skyblue'))
-    bacteriaPlot <- bacteriaPlot + scale_y_continuous(trans = 'log10')
-
-    bacteriaPlot
-    ggsave(paste(plotsDir, bacteriaTypes[iBacteria], ".pdf", sep = ""),
-           bacteriaPlot, width = 5, height = 6)
-
+    BarPlotGastroPak(bactSubData, c("Upstream", "Midstream", "Downstream"), "Sample",
+                     "HH", "Brilliant green agar plates", bacteriaTypes[iBacteria],
+                     c('chocolate4', 'skyblue'), "B", 4, plotsDir,
+                     bacteriaTypes[iBacteria])
   }
 
 }

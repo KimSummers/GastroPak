@@ -28,6 +28,8 @@ BarPlotGastroPak <- function(graphData, xAxisLabels, plotType, dataType, mainDat
   library(ggplot2)
   library(pals)
 
+  graphData$MeanCfu[graphData$MeanCfu == 0] <- NaN
+
   if (plotType == "Sample")
   {
     gpPlot <- ggplot(data = graphData, aes(x = SamplingSite, y = MeanCfu,
@@ -65,7 +67,7 @@ BarPlotGastroPak <- function(graphData, xAxisLabels, plotType, dataType, mainDat
 
   if (weightOrVol == "W")
   {
-    gpPlot <- gpPlot + labs(y = bquote('Log mean cfu '~g^-1),
+    gpPlot <- gpPlot + labs(y = bquote('Log mean cfu 0.1 '~g^-1),
                             title = paste(mainData, subData), fill = fillLabel)
   }else
   {
@@ -79,11 +81,11 @@ BarPlotGastroPak <- function(graphData, xAxisLabels, plotType, dataType, mainDat
 
       if (plotType == "Env")
       {
-        gpPlot <- gpPlot + labs(y = "Mean cfu / ml (water) or cfu / 0.1 g (sediment)",
+        gpPlot <- gpPlot + labs(y = "Log mean cfu / ml (water) or cfu / 0.1 g (sediment)",
                                 title = paste(mainData, subData), fill = fillLabel)
       }else
       {
-        gpPlot <- gpPlot + labs(y = "Mean cfu / ml (water) or cfu / 0.1 g (faeces)",
+        gpPlot <- gpPlot + labs(y = "Log mean cfu / ml (water) or cfu / 0.1 g (faeces)",
                                 title = paste(mainData, subData), fill = fillLabel)
       }
 
@@ -105,7 +107,7 @@ BarPlotGastroPak <- function(graphData, xAxisLabels, plotType, dataType, mainDat
 
   gpPlot <- gpPlot +
     theme(panel.background = element_rect(fill = "white", colour = "grey",
-                                          size = 0.5, linetype = "solid"))
+                                          linewidth = 0.5, linetype = "solid"))
 
   gpPlot <- gpPlot + theme(axis.title.y = element_text(size = 12))
   gpPlot <- gpPlot + theme(axis.title.x = element_blank())
@@ -125,7 +127,7 @@ BarPlotGastroPak <- function(graphData, xAxisLabels, plotType, dataType, mainDat
 
   if (rowGraphs == 3)
   {
-    graphWidth <- 5
+    graphWidth <- 6
   }else
 
     if (rowGraphs == 4)

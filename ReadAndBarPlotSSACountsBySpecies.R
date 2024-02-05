@@ -1,10 +1,10 @@
-# ReadAndBarPlotSSACountsBySpecies
+# ReadAndBarPlotEnvSSACountsBySpecies
 #
 # Read in plate count data and barchart plot it
 # One bar char for the E. coli counts, one for Samonella, and one for Shigella
 # Group counts by river and order by site
 #
-# file ReadAndBarPlotSSACountsBySpecies
+# file ReadAndBarPlotEnvSSACountsBySpecies
 #
 # inputs
 # 	plateCountSSAFile- file containing plate count data
@@ -13,13 +13,15 @@
 #   rawData           - True for absolute counts, false for cfu / ml
 #   sedimentReps      - Number of sediment dilutions
 #   waterReps         - Number of water dilutions
+#   season            - The season the data is from
 
 # Version    Author       Date      Affiliation
 # 1.00       J K Summers  16/07/23  Wellington Lab - School of Life Sciences - University of Warwick
 
-ReadAndBarPlotBGACountsBySepecies <- function(plateCountSSAFile, plotsDir,
-                                              metaDataFile, rawData,
-                                              sedimentReps, waterReps) {
+ReadAndBarPlotEnvSSACountsBySpecies <- function(plateCountSSAFile, plotsDir,
+                                                metaDataFile, rawData,
+                                                sedimentReps, waterReps,
+                                                season) {
 
   library(tidyverse)
 
@@ -47,11 +49,9 @@ ReadAndBarPlotBGACountsBySepecies <- function(plateCountSSAFile, plotsDir,
   plateSSACountData <- plateSSACountData %>% relocate(E.coli,
                                                       .after = Salmonella)
 
-  convertCols <- c(which(colnames(plateSSACountData) == "Shigella"),
-                   which(colnames(plateSSACountData) == "Salmonella"),
-                   which(colnames(plateSSACountData) == "E.coli"))
-
   bacteriaTypes <- c("Shigella", "Salmonella", "E.coli")
+
+  convertCols <- which(colnames(plateSSACountData) %in% bacteriaTypes)
 
   waterData <- plateSSACountData[plateSSACountData$SampleType == "Water", ]
   sedimentData <- plateSSACountData[plateSSACountData$SampleType == "Sediment", ]
@@ -94,7 +94,7 @@ ReadAndBarPlotBGACountsBySepecies <- function(plateCountSSAFile, plotsDir,
     BarPlotGastroPak(sumData, c("Upstream", "Midstream", "Downstream"), "Species",
                      "Env", "Salmonella-Shigella agar plates", sampleType[iSampleType],
                      c('grey', 'black', 'pink'), measureType, 3, plotsDir,
-                     sampleType[iSampleType])
+                     paste("SSA Env", season, sampleType[iSampleType]))
   }
 
 }

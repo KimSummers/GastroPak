@@ -58,10 +58,6 @@ ReadAndBarPlotChromoSelectEnvCountsBySpecies <- function(plateCountEnvCSFile,
                                                     rawData, convertCols,
                                                     bacteriaTypes, "Env"))
 
-  sampleNumbers <- unique(subPlateData$SampleID)
-  subPlateData$SampleID <- factor(subPlateData$SampleID,
-                                     levels = sampleNumbers)
-
   sampleCodes <- unique(subPlateData$SamplingCode)
   subPlateData$SamplingCode <- factor(subPlateData$SamplingCode,
                                       levels = sampleCodes)
@@ -77,51 +73,13 @@ ReadAndBarPlotChromoSelectEnvCountsBySpecies <- function(plateCountEnvCSFile,
   subPlateData$Bacteria <- factor(subPlateData$Bacteria,
                                   levels = bacteriaTypes)
 
-  subPlateData <- subPlateData[order(subPlateData$SampleID, subPlateData$Bacteria), ]
+  subPlateData <- subPlateData[order(subPlateData$SamplingCode, subPlateData$Bacteria), ]
 
   for (iSampleType in 1:length(sampleType))
   {
-    sampleSubData <- subPlateData[subPlateData$SampleType ==
-                                    sampleType[iSampleType], ]
-    groupLength <- 3 * length(bacteriaTypes)
+    sumData <- subSampleEnvData(subPlateData, sampleType[iSampleType], bacteriaTypes)
 
-    for (iRow in (1:(nrow(sampleSubData) / groupLength)))
-    {
-
-      for (iBacteria in 1:length(bacteriaTypes))
-      {
-        meanVal <- mean(sampleSubData$MeanCfu[(sampleSubData$SamplingSite ==
-                                                 sampleSubData$SamplingSite[iRow * groupLength]) &
-                                                (sampleSubData$Bacteria == bacteriaTypes[iBacteria])],
-                        na.rm = TRUE)
-        sdVal <- sd(sampleSubData$MeanCfu[(sampleSubData$SamplingSite ==
-                                             sampleSubData$SamplingSite[iRow * groupLength]) &
-                                            (sampleSubData$Bacteria == bacteriaTypes[iBacteria])],
-                    na.rm = TRUE)
-        sumDataRow <- cbind(sampleSubData[iRow * groupLength, c(1, 3, 4)],
-                            bacteriaTypes[iBacteria], meanVal, sdVal,
-                            sampleSubData[iRow * groupLength, 10:11])
-
-        colnames(sumDataRow)[4] <- "Bacteria"
-
-        if ((iRow == 1) & (iBacteria == 1))
-        {
-          sumData <- sumDataRow
-        }else
-        {
-          sumData <- rbind(sumData, sumDataRow)
-        }
-
-      }
-
-    }
-
-    sumData$meanVal[sumData$meanVal == 0] <- NaN
-    sumData$Bacteria <- factor(sumData$Bacteria, levels = unique(sumData$Bacteria))
-    sumData <- sumData[order(sumData$SamplingSite), ]
-    colnames(sumData)[5:8] <- c("MeanCfu", "StdDev", "River", "Location")
-
-    if (SampleType[iSample] == "Water")
+    if (sampleType[iSampleType] == "Water")
     {
       measureType = "V"
     }else
@@ -132,7 +90,7 @@ ReadAndBarPlotChromoSelectEnvCountsBySpecies <- function(plateCountEnvCSFile,
     BarPlotGastroPak(sumData, c("Upstream", "Midstream", "Downstream"), "Species",
                      "Env", "ChromoSelect plates", sampleType[iSampleType],
                      c('darkblue','tomato2', 'pink'), measureType, 3, plotsDir,
-                     sampleType[iSampleType])
+                     paste("CS", sampleType[iSampleType]))
   }
 
 }

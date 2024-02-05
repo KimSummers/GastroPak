@@ -73,7 +73,10 @@ numericCounts <- function(countData) {
     countData$`Violet/Purple` <- as.numeric(countData$`Violet/Purple`)
   }
 
-  countData$Yellow <- as.numeric(countData$Yellow)
+  if (!is_empty(which(colnames(countData) == "Yellow")))
+  {
+    countData$Yellow <- as.numeric(countData$Yellow)
+  }
 
   if (!is_empty(which(colnames(countData) == "Colorless with Black center")))
   {
@@ -108,6 +111,16 @@ numericCounts <- function(countData) {
   if (!is_empty(which(colnames(countData) == "Colorless/ white")))
   {
     countData$`Colorless/ white`<- as.numeric(countData$`Colorless/ white`)
+  }
+
+  if (!is_empty(which(colnames(countData) == "Pink Bile Precipitate")))
+  {
+    countData$`Pink Bile Precipitate` <- as.numeric(countData$`Pink Bile Precipitate`)
+  }
+
+  if (!is_empty(which(colnames(countData) == "Colorless with Black Centre")))
+  {
+    countData$`Colorless with Black Centre` <- as.numeric(countData$`Colorless with Black Centre`)
   }
 
   countData$Total <- as.numeric(countData$Total)

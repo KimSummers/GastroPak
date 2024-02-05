@@ -25,7 +25,7 @@ ReadAndBarPlotHHSSACounts <- function(plateCountHHSSAFile, plotsDir, metaDataFil
   # Read in data and put it in a dataframe
   plateSSACountData <- read_csv(plateCountHHSSAFile)
   metaData <- read_csv(metaDataFile)
-  metaData <- metaData[2:nrow(metaData), ]
+  metaData <- metaData[!is.na(metaData$`Sample code`), ]
 
   plateSSACountData <- numericCounts(plateSSACountData)
 
@@ -36,6 +36,7 @@ ReadAndBarPlotHHSSACounts <- function(plateCountHHSSAFile, plotsDir, metaDataFil
   stoolData <- fixMissingData(stoolData, stoolReps)
 
   plateSSACountData <- rbind(waterData, stoolData)
+  plateSSACountData <- nameCols(plateSSACountData)
 
   plateSSACountData <- coloursToSpeciesSSA(plateSSACountData)
   plateSSACountData <- addHouseholds(plateSSACountData, metaData)
@@ -51,9 +52,7 @@ ReadAndBarPlotHHSSACounts <- function(plateCountHHSSAFile, plotsDir, metaDataFil
                                                       .after = Shigella)
 
   bacteriaTypes <- c("Salmonella", "Shigella", "E.coli")
-  convertCols <- c(which(colnames(plateSSACountData) == "Salmonella"),
-                   which(colnames(plateSSACountData) == "Shigella"),
-                   which(colnames(plateSSACountData) == "E.coli"))
+  convertCols <- which(colnames(plateSSACountData) %in% bacteriaTypes)
 
   waterData <- plateSSACountData[plateSSACountData$SampleType == "Water", ]
   stoolData <- plateSSACountData[plateSSACountData$SampleType == "Stool", ]
@@ -64,7 +63,6 @@ ReadAndBarPlotHHSSACounts <- function(plateCountHHSSAFile, plotsDir, metaDataFil
                                                     rawData, convertCols,
                                                     bacteriaTypes, "HH"))
 
-  colnames(subPlateData)[which(colnames(subPlateData) == "Sample-ID")] <- "SampleID"
   subPlateData <- subPlateData[order(as.numeric(substr(subPlateData$Household,
                                                        11, length(subPlateData$Household))),
                                      subPlateData$SampleType,
@@ -87,12 +85,12 @@ ReadAndBarPlotHHSSACounts <- function(plateCountHHSSAFile, plotsDir, metaDataFil
   for (iBacteria in 1:length(bacteriaTypes))
   {
     bactSubData <- subBacteriaHHData(subPlateData, bacteriaTypes[iBacteria],
-                                     c("Water", "Stool"))
+                                     c("Stool", "Water"))
 
     BarPlotGastroPak(bactSubData, c("Upstream", "Midstream", "Downstream"), "Sample",
                      "HH", "Salmonella-Shigella agar plates", bacteriaTypes[iBacteria],
                      c('chocolate4', 'skyblue'), "B", 4, plotsDir,
-                     bacteriaTypes[iBacteria])
+                     paste("Household", bacteriaTypes[iBacteria]))
   }
 
 }

@@ -46,9 +46,7 @@ ReadAndBarPlotEnvSSACounts <- function(plateCountSSAFile, plotsDir, metaDataFile
   waterData <- plateSSACountData[plateSSACountData$SampleType == "Water", ]
   sedimentData <- plateSSACountData[plateSSACountData$SampleType == "Sediment", ]
 
-  convertCols <- c(which(colnames(plateSSACountData) == "Shigella"),
-                   which(colnames(plateSSACountData) == "Salmonella"),
-                   which(colnames(plateSSACountData) == "E.coli"))
+  convertCols <- which(colnames(plateSSACountData) %in% bacteriaTypes)
 
   subPlateData <- averageCounts(waterData, waterReps, rawData, convertCols,
                                 bacteriaTypes, "Env")
@@ -73,9 +71,9 @@ ReadAndBarPlotEnvSSACounts <- function(plateCountSSAFile, plotsDir, metaDataFile
   for (iBacteria in 1:length(bacteriaTypes))
   {
     bactSubData <- subBacteriaEnvData(subPlateData, bacteriaTypes[iBacteria],
-                                      c("Water", "Stool"))
+                                      c("Water", "Sediment"))
 
-    BarPlotGastroPak(sumData, c("Upstream", "Midstream", "Downstream"), "Sample",
+    BarPlotGastroPak(bactSubData, c("Upstream", "Midstream", "Downstream"), "Sample",
                      "Env", "Salmonella-Shigella agar plates", bacteriaTypes[iBacteria],
                      c('chocolate4', 'skyblue'), "B", 3, plotsDir,
                      bacteriaTypes[iBacteria])

@@ -16,7 +16,7 @@ addHouseholds <- function(countData, metaData) {
   for (iRow in 1:nrow(countData))
   {
     household <- paste("Household", metaData$Household[metaData$`Sample ID` ==
-                                                         countData$`Sample-ID`[iRow]])
+                                                         countData$SampleID[iRow]])
 
     if (iRow == 1)
     {

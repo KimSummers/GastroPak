@@ -19,9 +19,9 @@
 # 1.00       J K Summers  03/08/23  Wellington Lab - School of Life Sciences - University of Warwick
 
 ReadAndBarPlotHHSalmonellaCountsComp <- function(plateCountHHSSAFile,
-                                            plateCountHHBGAFile, qPCRFile,
-                                            metaDataFile, waterReps, stoolReps,
-                                            plotsDir) {
+                                                 plateCountHHBGAFile, qPCRFile,
+                                                 metaDataFile, waterReps,
+                                                 stoolReps, plotsDir) {
 
   # First load any libraries needed
   library(tidyverse)
@@ -33,9 +33,9 @@ ReadAndBarPlotHHSalmonellaCountsComp <- function(plateCountHHSSAFile,
   # For both the qPCR and meta data the first line has information not needed
   # by this code that should be removed
   qPCRData <- read_csv(qPCRFile)
-  qPCRData <- qPCRData[2:nrow(qPCRData), ]
+  qPCRData <- qPCRData[!is.na(qPCRData$Target), ]
   metaData <- read_csv(metaDataFile)
-  metaData <- metaData[2:nrow(metaData), ]
+  metaData <- metaData[!is.na(metaData$`Sample code`), ]
 
   # Only want Salmonella stool samples
   qPCRData <- qPCRData[(qPCRData$Target == "Salmonella") & (qPCRData$Season == "Household"), ]
@@ -54,8 +54,13 @@ ReadAndBarPlotHHSalmonellaCountsComp <- function(plateCountHHSSAFile,
   plateBGACountData <- cbind(plateBGACountData, rep("BGA", nrow(plateBGACountData)))
   colnames(plateBGACountData)[ncol(plateBGACountData)] <- "Media"
 
-  qPCRData <- cbind(qPCRData, paste(qPCRData$`Test Country`, "qPCR"))
-  colnames(qPCRData)[ncol(qPCRData)] <- "Media"
+  qPCRData <- nameCols(qPCRData)
+
+  if (nrow(qPCRData) > 0)
+  {
+    qPCRData <- cbind(qPCRData, paste(qPCRData$TestCountry, "qPCR"))
+    colnames(qPCRData)[ncol(qPCRData)] <- "Media"
+  }
 
   plateSSACountData <- nameCols(plateSSACountData)
   plateBGACountData <- nameCols(plateBGACountData)
@@ -88,7 +93,6 @@ ReadAndBarPlotHHSalmonellaCountsComp <- function(plateCountHHSSAFile,
   plateCountCombData <- rbind(waterData, stoolData)
   plateCountCombData <- addHouseholds(plateCountCombData, metaData)
 
-  colnames(qPCRData)[which(colnames(qPCRData) == "Sample")] <- "SampleID"
   qPCRData <- addHouseholds(qPCRData, metaData)
 
   # Convert the sample ids into the numeric part for sorting
@@ -113,11 +117,6 @@ ReadAndBarPlotHHSalmonellaCountsComp <- function(plateCountHHSSAFile,
                                                     "CfuCount", "HH"))
 
   qPCRData <- nameCols(qPCRData)
-  colnames(qPCRData)[1] <- "SampleID"
-  colnames(qPCRData)[2] <- "SampleType"
-  colnames(qPCRData)[5] <- "SamplingSite"
-  colnames(qPCRData)[20] <- "MeanCfu"
-  colnames(qPCRData)[22] <- "Household"
 
   qPCRData$SampleID <- as.numeric(substr(qPCRData$SampleID, 5, length(qPCRData$SampleID)))
   qPCRSubData <- cbind(qPCRData[, c(1, 5, 3, 7)], rep(0, nrow(qPCRData)),
@@ -128,7 +127,6 @@ ReadAndBarPlotHHSalmonellaCountsComp <- function(plateCountHHSSAFile,
   subPlateData <- rbind(subPlateData, qPCRSubData)
 
   subPlateData$MeanCfu <- as.numeric(subPlateData$MeanCfu)
-  colnames(subPlateData)[1] <- "SampleID"
 
   subPlateData <- subPlateData[order(as.numeric(substr(subPlateData$Household, 11, length(subPlateData$Household))),
                                      subPlateData$SampleType,
@@ -152,48 +150,26 @@ ReadAndBarPlotHHSalmonellaCountsComp <- function(plateCountHHSSAFile,
 
   for (iType in 1:length(sampleTypes))
   {
-    bactSubData <- subPlateData[subPlateData$SampleType ==
-                                  sampleTypes[iType], ]
+    bactSubData <- subSampleHHData(subPlateData, sampleType[iSampleType], mediaTypes)
 
-    for (iRow in (1:(nrow(bactSubData) / 3)))
+    if (sampleType[iType] == "Water")
     {
-      meanVal <- mean(bactSubData$MeanCfu[(bactSubData$SampleID ==
-                                             bactSubData$SampleID[iRow * 3]) &
-                                            (bactSubData$Media ==
-                                               bactSubData$Media[iRow * 3])],
-                      na.rm = TRUE)
-      sdVal <- sd(bactSubData$MeanCfu[(bactSubData$SampleID ==
-                                         bactSubData$SampleID[iRow * 3]) &
-                                        (bactSubData$Media ==
-                                           bactSubData$Media[iRow * 3])],
-                  na.rm = TRUE)
-      sumDataRow <- cbind(bactSubData[iRow * 3, 1:7], meanVal, sdVal,
-                          bactSubData[iRow * 3, 8:9])
-
-      if (iRow == 1)
-      {
-        sumData <- sumDataRow
-      }else
-      {
-        sumData <- rbind(sumData, sumDataRow)
-      }
-
+      measureType = "V"
+    }else
+    {
+      measureType = "W"
     }
-
-    sumData$meanVal[sumData$meanVal == 0] <- NaN
-    sumData$sdVal[sumData$sdVal == 0] <- NaN
-    sumData$sdVal[(sumData$meanVal - sumData$sdVal) < 1] <- NaN
 
     if (iType == 1)
     {
-      BarPlotGastroPak(sumData, "", "Media", "HH", "Salmonella counts", "Stool",
+      BarPlotGastroPak(bactSubData, "", "Media", "HH", "Salmonella counts", sampleType[iType],
                        fillColours = c('palevioletred', 'black',  'gold', 'lightgrey'),
                        "W", 4, plotsDir, sampleTypes[iType])
     }else
     {
       BarPlotGastroPak(sumData, "", "Media", "HH", "E coli counts", "Water",
                        fillColours = c('palevioletred', 'black',  'gold', 'lightgrey'),
-                       "V", 4, plotsDir, sampleTypes[iType])
+                       "V", 4, plotsDir, paste("Household", sampleTypes[iType]))
     }
 
   }

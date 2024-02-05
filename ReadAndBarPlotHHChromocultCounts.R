@@ -27,7 +27,7 @@ ReadAndBarPlotHHChromoSelectCounts <- function(plateCountHHCSFile, plotsDir,
   # Read in data and put it in a dataframe
   plateCSCountData <- read_csv(plateCountHHCSFile)
   metaData <- read_csv(metaDataFile)
-  metaData <- metaData[2:nrow(metaData), ]
+  metaData <- metaData[!is.na(metaData$`Sample code`), ]
 
   plateCSCountData <- numericCounts(plateCSCountData)
 
@@ -55,17 +55,13 @@ ReadAndBarPlotHHChromoSelectCounts <- function(plateCountHHCSFile, plotsDir,
   waterData <- plateCSCountData[plateCSCountData$SampleType == "Water", ]
   stoolData <- plateCSCountData[plateCSCountData$SampleType == "Stool", ]
 
-  convertCols <- c(which(colnames(plateCSCountData) == "E.coli"),
-                   which(colnames(plateCSCountData) == "coliforms"),
-                   which(colnames(plateCSCountData) == "Klebsiella"))
+  convertCols <- which(colnames(plateCSCountData) %in% bacteriaTypes)
 
   subPlateData <- averageCounts(waterData, waterReps, rawData, convertCols,
                                 bacteriaTypes, "HH")
   subPlateData <- rbind(subPlateData, averageCounts(stoolData, stoolReps, rawData,
                                                     convertCols, bacteriaTypes,
                                                     "HH"))
-
-  colnames(subPlateData)[which(colnames(subPlateData) == "Sample-ID")] <- "SampleID"
 
   subPlateData <- subPlateData[order(as.numeric(substr(subPlateData$Household, 11, length(subPlateData$Household))),
                                      subPlateData$SampleType,
@@ -90,7 +86,7 @@ ReadAndBarPlotHHChromoSelectCounts <- function(plateCountHHCSFile, plotsDir,
     bactSubData <- subBacteriaHHData(subPlateData, bacteriaTypes[iBacteria],
                                      c("Water", "Stool"))
 
-    BarPlotGastroPak(sumData, c("Upstream", "Midstream", "Downstream"), "Sample",
+    BarPlotGastroPak(bactSubData, c("Upstream", "Midstream", "Downstream"), "Sample",
                      "HH", "ChromoSelect plates", bacteriaTypes[iBacteria],
                      c('chocolate4', 'skyblue'), "B", 4, plotsDir,
                      bacteriaTypes[iBacteria])
