@@ -19,7 +19,8 @@
 
 ReadAndBarPlotBGAEnvCountsBySpecies <- function(plateCountBGAFile, plotsDir,
                                                 metaDataFile, rawData,
-                                                sedimentReps, waterReps) {
+                                                sedimentReps, waterReps,
+                                                season) {
 
   library(tidyverse)
 
@@ -86,7 +87,7 @@ ReadAndBarPlotBGAEnvCountsBySpecies <- function(plateCountBGAFile, plotsDir,
     BarPlotGastroPak(sumData, c("Upstream", "Midstream", "Downstream"), "Species",
                      "Env", "Brilliant green agar", sampleType[iSampleType],
                      c('palevioletred', 'yellowgreen'), measureType, 3, plotsDir,
-                     paste("BGA", sampleType[iSampleType]))
+                     paste("Env", season, "BGA", sampleType[iSampleType]))
   }
 
 }

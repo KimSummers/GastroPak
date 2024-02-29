@@ -1,7 +1,7 @@
 # ReadAndBarPlotEnvSSACountsBySpecies
 #
 # Read in plate count data and barchart plot it
-# One bar char for the E. coli counts, one for Samonella, and one for Shigella
+# One bar chart for the water samples and one for sediment
 # Group counts by river and order by site
 #
 # file ReadAndBarPlotEnvSSACountsBySpecies

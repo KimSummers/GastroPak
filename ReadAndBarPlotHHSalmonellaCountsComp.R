@@ -11,7 +11,7 @@
 # 	plateCountHHBGAFile - file containing plate count data on BGA
 # 	qPCRFile            - file containing qPCR data
 #   metaDataFile        - file containing meta data about the samples
-#   stoolReps           - Number of stool dilutions
+#   faecallReps         - Number of faecal dilutions
 #   waterReps           - Number of water dilutions
 #   plotsDir            - directory to store plots in
 
@@ -21,7 +21,7 @@
 ReadAndBarPlotHHSalmonellaCountsComp <- function(plateCountHHSSAFile,
                                                  plateCountHHBGAFile, qPCRFile,
                                                  metaDataFile, waterReps,
-                                                 stoolReps, plotsDir) {
+                                                 faecalReps, plotsDir) {
 
   # First load any libraries needed
   library(tidyverse)
@@ -37,7 +37,7 @@ ReadAndBarPlotHHSalmonellaCountsComp <- function(plateCountHHSSAFile,
   metaData <- read_csv(metaDataFile)
   metaData <- metaData[!is.na(metaData$`Sample code`), ]
 
-  # Only want Salmonella stool samples
+  # Only want Salmonella faecal samples
   qPCRData <- qPCRData[(qPCRData$Target == "Salmonella") & (qPCRData$Season == "Household"), ]
 
   # Ensure all the counts data is numeric
@@ -47,6 +47,10 @@ ReadAndBarPlotHHSalmonellaCountsComp <- function(plateCountHHSSAFile,
   plateSSACountData <- coloursToSpeciesSSA(plateSSACountData)
   plateBGACountData <- coloursToSpeciesBGA(plateBGACountData)
 
+  plateBGACountData <- nameCols(plateBGACountData)
+  plateSSACountData <- nameCols(plateSSACountData)
+  qPCRData <- nameCols(qPCRData)
+
   # Add an extra column for the media type to each count table
   plateSSACountData <- cbind(plateSSACountData, rep("SSA", nrow(plateSSACountData)))
   colnames(plateSSACountData)[ncol(plateSSACountData)] <- "Media"
@@ -54,16 +58,11 @@ ReadAndBarPlotHHSalmonellaCountsComp <- function(plateCountHHSSAFile,
   plateBGACountData <- cbind(plateBGACountData, rep("BGA", nrow(plateBGACountData)))
   colnames(plateBGACountData)[ncol(plateBGACountData)] <- "Media"
 
-  qPCRData <- nameCols(qPCRData)
-
   if (nrow(qPCRData) > 0)
   {
     qPCRData <- cbind(qPCRData, paste(qPCRData$TestCountry, "qPCR"))
     colnames(qPCRData)[ncol(qPCRData)] <- "Media"
   }
-
-  plateSSACountData <- nameCols(plateSSACountData)
-  plateBGACountData <- nameCols(plateBGACountData)
 
   selSSACols <- c(which(colnames(plateSSACountData) == "SampleID"),
                   which(colnames(plateSSACountData) == "SamplingSite"),
@@ -85,12 +84,12 @@ ReadAndBarPlotHHSalmonellaCountsComp <- function(plateCountHHSSAFile,
                               plateBGACountData[selBGACols])
 
   waterData <- plateCountCombData[plateCountCombData$SampleType == "Water", ]
-  stoolData <- plateCountCombData[plateCountCombData$SampleType == "Stool", ]
+  faecalData <- plateCountCombData[plateCountCombData$SampleType == "Stool", ]
 
   waterData <- fixMissingData(waterData, waterReps)
-  stoolData <- fixMissingData(stoolData, stoolReps)
+  faecalData <- fixMissingData(faecalData, faecalReps)
 
-  plateCountCombData <- rbind(waterData, stoolData)
+  plateCountCombData <- rbind(waterData, faecalData)
   plateCountCombData <- addHouseholds(plateCountCombData, metaData)
 
   qPCRData <- addHouseholds(qPCRData, metaData)
@@ -106,21 +105,30 @@ ReadAndBarPlotHHSalmonellaCountsComp <- function(plateCountHHSSAFile,
   mediaTypes <- c("SSA", "BGA", "UK qPCR", "Pak qPCR")
 
   waterData <- plateCountCombData[plateCountCombData$SampleType == "Water", ]
-  stoolData <- plateCountCombData[plateCountCombData$SampleType == "Stool", ]
+  faecalData <- plateCountCombData[plateCountCombData$SampleType == "Stool", ]
 
   convertCols <- which(colnames(plateCountCombData) == "CfuCount")
 
   subPlateData <- averageCounts(waterData, waterReps, rawData, convertCols,
-                                "CfuCount", "HH")
-  subPlateData <- rbind(subPlateData, averageCounts(stoolData, stoolReps,
+                                "Salmonella", "HH", TRUE)
+  subPlateData <- rbind(subPlateData, averageCounts(faecalData, faecalReps,
                                                     rawData, convertCols,
-                                                    "CfuCount", "HH"))
+                                                    "Salmonella", "HH", TRUE))
 
   qPCRData <- nameCols(qPCRData)
+  qPCRFirstSelCols <- c(which(colnames(qPCRData) == "SampleID"),
+                        which(colnames(qPCRData) == "SamplingSite"),
+                        which(colnames(qPCRData) == "SampleType"),
+                        which(colnames(qPCRData) == "Replicate"))
 
-  qPCRData$SampleID <- as.numeric(substr(qPCRData$SampleID, 5, length(qPCRData$SampleID)))
-  qPCRSubData <- cbind(qPCRData[, c(1, 5, 3, 7)], rep(0, nrow(qPCRData)),
-                       rep(0, nrow(qPCRData)), qPCRData[, 20:22])
+  qPCRSecondSelCols <- c(which(colnames(qPCRData) == "MeanCfu"),
+                         which(colnames(qPCRData) == "Household"),
+                         which(colnames(qPCRData) == "Media"))
+
+  qPCRData$SampleID <- as.numeric(substr(qPCRData$SampleID, 5, nchar(qPCRData$SampleID)))
+  qPCRSubData <- cbind(qPCRData[, qPCRFirstSelCols], rep("Salmonella", nrow(qPCRData)),
+                       rep(0, nrow(qPCRData)), rep(0, nrow(qPCRData)),
+                       qPCRData[, qPCRSecondSelCols])
 
   colnames(qPCRSubData) <- colnames(subPlateData)
 
@@ -135,6 +143,9 @@ ReadAndBarPlotHHSalmonellaCountsComp <- function(plateCountHHSSAFile,
   subPlateData$SampleID <- factor(subPlateData$SampleID,
                                   levels = sampleNumbers)
 
+  mediaTypes <- unique(subPlateData$Media)
+  subPlateData$Media <- factor(subPlateData$Media, levels = mediaTypes)
+
   sampleSites <- unique(subPlateData$SamplingSite)
   subPlateData$SamplingSite <- factor(subPlateData$SamplingSite,
                                       levels = sampleSites)
@@ -146,11 +157,11 @@ ReadAndBarPlotHHSalmonellaCountsComp <- function(plateCountHHSSAFile,
   subPlateData$Household <- factor(subPlateData$Household,
                                    levels = households)
 
-  sampleTypes <- c("Stool", "Water")
+  sampleTypes <- c("Faecal", "Water")
 
   for (iType in 1:length(sampleTypes))
   {
-    bactSubData <- subSampleHHData(subPlateData, sampleType[iSampleType], mediaTypes)
+    bactSubData <- subCompHHData(subPlateData, sampleType[iSampleType], mediaTypes)
 
     if (sampleType[iType] == "Water")
     {
@@ -160,19 +171,10 @@ ReadAndBarPlotHHSalmonellaCountsComp <- function(plateCountHHSSAFile,
       measureType = "W"
     }
 
-    if (iType == 1)
-    {
-      BarPlotGastroPak(bactSubData, "", "Media", "HH", "Salmonella counts", sampleType[iType],
-                       fillColours = c('palevioletred', 'black',  'gold', 'lightgrey'),
-                       "W", 4, plotsDir, sampleTypes[iType])
-    }else
-    {
-      BarPlotGastroPak(sumData, "", "Media", "HH", "E coli counts", "Water",
-                       fillColours = c('palevioletred', 'black',  'gold', 'lightgrey'),
-                       "V", 4, plotsDir, paste("Household", sampleTypes[iType]))
-    }
-
+    BarPlotGastroPak(bactSubData, "", "Media", "HH", "Salmonella counts", sampleType[iType],
+                     fillColours = c('palevioletred', 'black',  'gold', 'lightgrey'),
+                     measureType, 4, plotsDir, paste("Household Salmonella",
+                                               sampleTypes[iType]))
   }
 
 }
-

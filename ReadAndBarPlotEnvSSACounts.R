@@ -76,7 +76,7 @@ ReadAndBarPlotEnvSSACounts <- function(plateCountSSAFile, plotsDir, metaDataFile
     BarPlotGastroPak(bactSubData, c("Upstream", "Midstream", "Downstream"), "Sample",
                      "Env", "Salmonella-Shigella agar plates", bacteriaTypes[iBacteria],
                      c('chocolate4', 'skyblue'), "B", 3, plotsDir,
-                     bacteriaTypes[iBacteria])
+                     paste("Household SSA", bacteriaTypes[iBacteria]))
   }
 
 }

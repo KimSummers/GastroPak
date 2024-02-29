@@ -40,9 +40,8 @@ ReadAndBarPlotHHChromoSelectCounts <- function(plateCountHHCSFile, plotsDir,
   plateCSCountData <- rbind(waterData, stoolData)
 
   plateCSCountData <- coloursToSpeciesCS(plateCSCountData)
-  plateCSCountData <- addHouseholds(plateCSCountData, metaData)
-
   plateCSCountData <- nameCols(plateCSCountData)
+  plateCSCountData <- addHouseholds(plateCSCountData, metaData)
 
   plateCSCountData$SampleID <-
     as.numeric(substr(plateCSCountData$SampleID, 5, 8))
@@ -63,7 +62,8 @@ ReadAndBarPlotHHChromoSelectCounts <- function(plateCountHHCSFile, plotsDir,
                                                     convertCols, bacteriaTypes,
                                                     "HH"))
 
-  subPlateData <- subPlateData[order(as.numeric(substr(subPlateData$Household, 11, length(subPlateData$Household))),
+  subPlateData <- subPlateData[order(as.numeric(substr(subPlateData$Household, 11,
+                                                       length(subPlateData$Household))),
                                      subPlateData$SampleType,
                                      subPlateData$SampleID), ]
   sampleNumbers <- unique(subPlateData$SampleID)
@@ -78,18 +78,17 @@ ReadAndBarPlotHHChromoSelectCounts <- function(plateCountHHCSFile, plotsDir,
                                     levels = sampleType)
 
   households <- unique(subPlateData$Household)
-  subPlateData$Household <- factor(subPlateData$Household,
-                                   levels = households)
+  subPlateData$Household <- factor(subPlateData$Household, levels = households)
 
   for (iBacteria in 1:length(bacteriaTypes))
   {
     bactSubData <- subBacteriaHHData(subPlateData, bacteriaTypes[iBacteria],
-                                     c("Water", "Stool"))
+                                     c("Stool", "Water"))
 
     BarPlotGastroPak(bactSubData, c("Upstream", "Midstream", "Downstream"), "Sample",
                      "HH", "ChromoSelect plates", bacteriaTypes[iBacteria],
                      c('chocolate4', 'skyblue'), "B", 4, plotsDir,
-                     bacteriaTypes[iBacteria])
+                     paste("Household CS", bacteriaTypes[iBacteria]))
   }
 
 }

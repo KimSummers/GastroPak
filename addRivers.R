@@ -15,8 +15,8 @@ addRivers <- function(countData, metaData) {
 
   for (iRow in 1:nrow(countData))
   {
-    river <- metaData$River[metaData$Sampling.Site == countData$`Sampling Site`[iRow]]
-    sampleLoc <- metaData$Location[metaData$Sampling.Site == countData$`Sampling Site`[iRow]]
+    river <- metaData$River[metaData$`Sampling Site` == countData$SamplingSite[iRow]]
+    sampleLoc <- metaData$Location[metaData$`Sampling Site` == countData$SamplingSite[iRow]]
 
     if (iRow == 1)
     {

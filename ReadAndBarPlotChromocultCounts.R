@@ -76,9 +76,10 @@ ReadAndBarPlotEnvChromoSelectCounts <- function(plateCountEnvCSFile, plotsDir,
     bactSubData <- subBacteriaEnvData(subPlateData, bacteriaTypes[iBacteria],
                                       c("Sediment", "Water"))
 
-    BarPlotGastroPak(bactSubData, c("Upstream", "Midstream", "Downstream"), "Sample",
-                     "Chromocult plates", bacteriaTypes[iBacteria],
-                     c('chocolate4', 'skyblue'), plotsDir, bacteriaTypes[iBacteria])
+    BarPlotGastroPak(bactSubData, c("Upstream", "Midstream", "Downstream"),
+                     "Sample", "Chromocult plates", bacteriaTypes[iBacteria],
+                     c('chocolate4', 'skyblue'), plotsDir,
+                     paste("Env CS", bacteriaTypes[iBacteria]))
   }
 
 }

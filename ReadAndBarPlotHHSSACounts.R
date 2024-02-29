@@ -1,7 +1,7 @@
 # ReadAndBarPlotHHSSACounts
 #
 # Read in plate count data and barchart plot it
-# One bar char for the E. coli counts, one for Salmonella, one for Shigella
+# One bar chart for the water counts and one for faecal
 # Group counts by house and order by sample type and number
 #
 # file ReadAndBarPlotHHSSACounts
@@ -9,16 +9,16 @@
 # inputs
 # 	plateCountFile  - file containing plate count data
 #   plotsDir        - directory to store plots in
-#   metaDataFile      - file containing river meta data
-#   rawData           - True for absolute counts, false for cfu / ml
-#   stoolReps         - Number of stool dilutions
-#   waterReps         - Number of water dilutions
+#   metaDataFile    - file containing river meta data
+#   rawData         - True for absolute counts, false for cfu / ml
+#   faecalReps      - Number of faecal dilutions
+#   waterReps       - Number of water dilutions
 
 # Version    Author       Date      Affiliation
 # 1.00       J K Summers  05/05/23  Wellington Lab - School of Life Sciences - University of Warwick
 
 ReadAndBarPlotHHSSACounts <- function(plateCountHHSSAFile, plotsDir, metaDataFile,
-                                      rawData, stoolReps, waterReps) {
+                                      rawData, faecalReps, waterReps) {
 
   library(tidyverse)
 
@@ -87,10 +87,10 @@ ReadAndBarPlotHHSSACounts <- function(plateCountHHSSAFile, plotsDir, metaDataFil
     bactSubData <- subBacteriaHHData(subPlateData, bacteriaTypes[iBacteria],
                                      c("Stool", "Water"))
 
-    BarPlotGastroPak(bactSubData, c("Upstream", "Midstream", "Downstream"), "Sample",
+    BarPlotGastroPak(bactSubData, "", "Sample",
                      "HH", "Salmonella-Shigella agar plates", bacteriaTypes[iBacteria],
                      c('chocolate4', 'skyblue'), "B", 4, plotsDir,
-                     paste("Household", bacteriaTypes[iBacteria]))
+                     paste("Household SSA", bacteriaTypes[iBacteria]))
   }
 
 }

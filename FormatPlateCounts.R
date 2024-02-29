@@ -35,50 +35,41 @@ FormatPlateCounts <- function(plateCountData, mediaType, plotsDir, formattedDir,
 
   if (mediaType == "ChromoSelect")
   {
+    bacteriaSpecies <- c("E.coli", "Coliforms", "Klebsiella")
+
     plateCountData <- coloursToSpeciesCS(plateCountData)
     plateCountData <- nameCols(plateCountData)
-    convertCols <- c(which(colnames(plateCountData) == "E.coli"),
-                     which(colnames(plateCountData) == "Coliforms"),
-                     which(colnames(plateCountData) == "Klebsiella"))
+    convertCols <- which(colnames(plateCountData) %in% bacteriaSpecies)
 
-    plateCountData <- plateCountData %>% relocate(E.coli,
-                                                      .after = Dilution)
-    plateCountData <- plateCountData %>% relocate(Coliforms,
-                                                      .after = E.coli)
-    plateCountData <- plateCountData %>% relocate(Klebsiella,
-                                                      .after = Coliforms)
+    plateCountData <- plateCountData %>% relocate(E.coli, .after = Dilution)
+    plateCountData <- plateCountData %>% relocate(Coliforms, .after = E.coli)
+    plateCountData <- plateCountData %>% relocate(Klebsiella, .after = Coliforms)
   }else
   {
-
     if (mediaType == "SSA")
     {
+      bacteriaSpecies <- c("Salmonella", "E.coli", "Shigella")
+
       plateCountData <- coloursToSpeciesSSA(plateCountData)
       plateCountData <- nameCols(plateCountData)
 
-      convertCols <- c(which(colnames(plateCountData) == "Salmonella"),
-                       which(colnames(plateCountData) == "E.coli"),
-                       which(colnames(plateCountData) == "Shigella"))
-      plateCountData <- plateCountData %>% relocate(Salmonella,
-                                                        .after = Dilution)
-      plateCountData <- plateCountData %>% relocate(Shigella,
-                                                        .after = Salmonella)
-      plateCountData <- plateCountData %>% relocate(E.coli,
-                                                        .after = Shigella)
+      convertCols <- which(colnames(plateCountData) %in% bacteriaSpecies)
+      plateCountData <- plateCountData %>% relocate(Salmonella, .after = Dilution)
+      plateCountData <- plateCountData %>% relocate(Shigella, .after = Salmonella)
+      plateCountData <- plateCountData %>% relocate(E.coli, .after = Shigella)
     }else
     {
 
       if (mediaType == "BGA")
       {
+        bacteriaSpecies <- c("Salmonella", "E.coli")
+
         plateCountData <- coloursToSpeciesBGA(plateCountData)
         plateCountData <- nameCols(plateCountData)
 
-        convertCols <- c(which(colnames(plateCountData) == "Salmonella"),
-                         which(colnames(plateCountData) == "E.coli"))
-        plateCountData <- plateCountData %>% relocate(Salmonella,
-                                                          .after = Dilution)
-        plateCountData <- plateCountData %>% relocate(E.coli,
-                                                          .after = Salmonella)
-
+        convertCols <- which(colnames(plateCountData) %in% bacteriaSpecies)
+        plateCountData <- plateCountData %>% relocate(Salmonella, .after = Dilution)
+        plateCountData <- plateCountData %>% relocate(E.coli, .after = Salmonella)
       }
 
     }

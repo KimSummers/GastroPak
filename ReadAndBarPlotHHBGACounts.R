@@ -38,9 +38,8 @@ ReadAndBarPlotHHBGACounts <- function(plateCountFile, plotsDir, metaDataFile,
   plateBGACountData <- rbind(waterData, stoolData)
 
   plateBGACountData <- coloursToSpeciesBGA(plateBGACountData)
-  plateBGACountData <- addHouseholds(plateBGACountData, metaData)
-
   plateBGACountData <- nameCols(plateBGACountData)
+  plateBGACountData <- addHouseholds(plateBGACountData, metaData)
 
   plateBGACountData$SampleID <-
     as.numeric(substr(plateBGACountData$SampleID, 5, 8))
@@ -82,12 +81,12 @@ ReadAndBarPlotHHBGACounts <- function(plateCountFile, plotsDir, metaDataFile,
   for (iBacteria in 1:length(bacteriaTypes))
   {
     bactSubData <- subBacteriaHHData(subPlateData, bacteriaTypes[iBacteria],
-                                     c("Water", "Stool"))
+                                     c("Stool", "Water"))
 
     BarPlotGastroPak(bactSubData, c("Upstream", "Midstream", "Downstream"), "Sample",
                      "HH", "Brilliant green agar plates", bacteriaTypes[iBacteria],
                      c('chocolate4', 'skyblue'), "B", 4, plotsDir,
-                     bacteriaTypes[iBacteria])
+                     paste("Household BGA", bacteriaTypes[iBacteria]))
   }
 
 }

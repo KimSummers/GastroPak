@@ -32,19 +32,46 @@ BarPlotGastroPak <- function(graphData, xAxisLabels, plotType, dataType, mainDat
 
   if (plotType == "Sample")
   {
-    gpPlot <- ggplot(data = graphData, aes(x = SamplingSite, y = MeanCfu,
+
+    if (dataType == "HH")
+    {
+      gpPlot <- ggplot(data = graphData, aes(x = SampleID, y = MeanCfu,
+                                             fill = SampleType))
+    }else
+    {
+      gpPlot <- ggplot(data = graphData, aes(x = SamplingSite, y = MeanCfu,
                                            fill = SampleType))
+    }
+
   }else
   {
 
     if (plotType == "Species")
     {
-      gpPlot <- ggplot(data = graphData, aes(x = SamplingSite, y = MeanCfu,
-                                            fill = Bacteria))
+
+      if (dataType == "HH")
+      {
+        gpPlot <- ggplot(data = graphData, aes(x = SampleID, y = MeanCfu,
+                                               fill = Bacteria))
+      }else
+      {
+        gpPlot <- ggplot(data = graphData, aes(x = SamplingSite, y = MeanCfu,
+                                               fill = Bacteria))
+      }
+
     }else
     {
-      gpPlot <- ggplot(data = graphData, aes(x = SamplingSite, y = MeanCfu,
-                                             fill = Media))
+
+      if (dataType == "HH")
+      {
+        gpPlot <- ggplot(data = graphData, aes(x = SampleID, y = MeanCfu,
+                                               fill = Media))
+      }else
+      {
+        gpPlot <- ggplot(data = graphData, aes(x = SamplingSite, y = MeanCfu,
+                                               fill = Media))
+      }
+
     }
 
   }
@@ -59,27 +86,35 @@ BarPlotGastroPak <- function(graphData, xAxisLabels, plotType, dataType, mainDat
 
   if (plotType == "Species")
   {
-    fillLabel = "Bacteria"
+    fillLabel <- "Bacteria"
   }else
   {
-    fillLabel = "Sample Type"
+
+    if (plotType == "Sample")
+    {
+      fillLabel <- "Sample Type"
+    }else
+    {
+      fillLabel <- "Media"
+    }
+
   }
 
   if (weightOrVol == "W")
   {
-    gpPlot <- gpPlot + labs(y = bquote('Log mean cfu 0.1 '~g^-1),
+    gpPlot <- gpPlot + labs(y = bquote('Log mean cfu 0.1'~g^-1),
                             title = paste(mainData, subData), fill = fillLabel)
   }else
   {
 
     if (weightOrVol == "V")
     {
-      gpPlot <- gpPlot + labs(y = bquote('Log mean cfu '~ml^-1),
+      gpPlot <- gpPlot + labs(y = bquote('Log mean cfu'~ml^-1),
                               title = paste(mainData, subData), fill = fillLabel)
     }else
     {
 
-      if (plotType == "Env")
+      if (dataType == "Env")
       {
         gpPlot <- gpPlot + labs(y = "Log mean cfu / ml (water) or cfu / 0.1 g (sediment)",
                                 title = paste(mainData, subData), fill = fillLabel)

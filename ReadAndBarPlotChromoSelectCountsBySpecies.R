@@ -14,6 +14,7 @@
 #   rawData           - True for absolute counts, false for cfu / ml
 #   sedimentReps      - Number of sediment dilutions
 #   waterReps         - Number of water dilutions
+#   season            - The season the data is from
 
 # Version    Author       Date      Affiliation
 # 1.00       J K Summers  15/07/23  Wellington Lab - School of Life Sciences - University of Warwick
@@ -21,7 +22,7 @@
 ReadAndBarPlotChromoSelectEnvCountsBySpecies <- function(plateCountEnvCSFile,
                                                          plotsDir, metaDataFile,
                                                          rawData, sedimentReps,
-                                                         waterReps) {
+                                                         waterReps, season) {
 
   library(tidyverse)
 
@@ -90,7 +91,7 @@ ReadAndBarPlotChromoSelectEnvCountsBySpecies <- function(plateCountEnvCSFile,
     BarPlotGastroPak(sumData, c("Upstream", "Midstream", "Downstream"), "Species",
                      "Env", "ChromoSelect plates", sampleType[iSampleType],
                      c('darkblue','tomato2', 'pink'), measureType, 3, plotsDir,
-                     paste("CS", sampleType[iSampleType]))
+                     paste(season, "CS", sampleType[iSampleType]))
   }
 
 }

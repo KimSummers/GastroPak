@@ -12,12 +12,13 @@
 #   bacteriaTypes - Names of bacteria for which we have counts
 #   sampleType    - Type of sample
 #   campaignType  - "Env" for environmental, "HH" for household
+#.  incMedia      - Should a media column be included (true for comparison datasets)
 
 # Version    Author       Date      Affiliation
 # 1.00       J K Summers  11/12/23  Wellington Lab - School of Life Sciences - University of Warwick
 
 averageCounts <- function(countData, numDilutions, rawData, convertCols,
-                          bacteriaTypes, campaignType) {
+                          bacteriaTypes, campaignType, incMedia = FALSE) {
 
   if (!rawData)
   {
@@ -67,16 +68,23 @@ averageCounts <- function(countData, numDilutions, rawData, convertCols,
 
       if (campaignType == "Env")
       {
-          newRow <- cbind(newRow, countData$River[((iRow - 1) * numDilutions + 1)],
-                          countData$RiverLocation[((iRow - 1) * numDilutions + 1)])
-          colnames(newRow)[5:10] <- c("Bacteria", "Total colony count",
-                                      "Total volume count", "MeanCfu", "River",
-                                      "Location")
+        newRow <- cbind(newRow, countData$River[((iRow - 1) * numDilutions + 1)],
+                        countData$RiverLocation[((iRow - 1) * numDilutions + 1)])
+        colnames(newRow)[(length(firstCols) + 1):ncol(newRow)] <-
+          c("Bacteria", "Total colony count", "Total volume count", "MeanCfu",
+             "River", "Location")
       }else
       {
         newRow <- cbind(newRow, countData$Household[((iRow - 1) * numDilutions + 1)])
-        colnames(newRow)[5:9] <- c("Bacteria", "Total colony count",
-                                    "Total volume count", "MeanCfu", "Household")
+        colnames(newRow)[(length(firstCols) + 1):ncol(newRow)] <-
+          c("Bacteria", "Total colony count", "Total volume count", "MeanCfu",
+             "Household")
+      }
+
+      if (incMedia)
+      {
+        newRow <- cbind(newRow, countData$Media[((iRow - 1) * numDilutions + 1)])
+        colnames(newRow)[ncol(newRow)] <- "Media"
       }
 
       if (iRow == 1 & iName == 1)

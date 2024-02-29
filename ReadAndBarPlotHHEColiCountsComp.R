@@ -41,6 +41,11 @@ ReadAndBarPlotHHEColiCountsComp <- function(plateCountHHCSFile, plateCountHHSSAF
   metaData <- read_csv(metaDataFile)
   metaData <- metaData[!is.na(metaData$`Sample code`), ]
 
+  qPCRData <- nameCols(qPCRData)
+
+  # Only want E. coli stool samples
+  qPCRData <- qPCRData[(qPCRData$Target == "E. coli") & (qPCRData$Season == "Household"), ]
+
   # Ensure all the counts data is numeric
   plateCSCountData <- numericCounts(plateCSCountData)
   plateCSCountData <- plateCSCountData[, 1:(ncol(plateCSCountData) - 3)]
@@ -52,8 +57,6 @@ ReadAndBarPlotHHEColiCountsComp <- function(plateCountHHCSFile, plateCountHHSSAF
   plateSSACountData <- coloursToSpeciesSSA(plateSSACountData)
   plateBGACountData <- coloursToSpeciesBGA(plateBGACountData)
 
-  # Only want E. coli stool samples
-  qPCRData <- qPCRData[(qPCRData$Target == "E. coli") & (qPCRData$Season == "Household"), ]
   plateCSCountData <- nameCols(plateCSCountData)
   plateBGACountData <- nameCols(plateBGACountData)
   plateSSACountData <- nameCols(plateSSACountData)
@@ -67,8 +70,6 @@ ReadAndBarPlotHHEColiCountsComp <- function(plateCountHHCSFile, plateCountHHSSAF
 
   plateBGACountData <- cbind(plateBGACountData, rep("BGA", nrow(plateBGACountData)))
   colnames(plateBGACountData)[ncol(plateBGACountData)] <- "Media"
-
-  qPCRData <- nameCols(qPCRData)
 
   if (nrow(qPCRData) > 0)
   {
@@ -97,6 +98,7 @@ ReadAndBarPlotHHEColiCountsComp <- function(plateCountHHCSFile, plateCountHHSSAF
                   which(colnames(plateSSACountData) == "Dilution"),
                   which(colnames(plateSSACountData) == "E.coli"),
                   which(colnames(plateSSACountData) == "Media"))
+
   # Now combine the sample data and e. coli counts across the plates into one new table
   plateCountCombData <- rbind(plateCSCountData[selCSCols],
                               plateSSACountData[selSSACols],
@@ -109,32 +111,45 @@ ReadAndBarPlotHHEColiCountsComp <- function(plateCountHHCSFile, plateCountHHSSAF
   stoolData <- fixMissingData(stoolData, stoolReps)
 
   plateCountCombData <- rbind(waterData, stoolData)
-
   plateCountCombData <- addHouseholds(plateCountCombData, metaData)
 
-  colnames(qPCRData)[which(colnames(qPCRData) == "Sample")] <- "SampleID"
   qPCRData <- addHouseholds(qPCRData, metaData)
 
   # Convert the sample ids into the numeric part for sorting
   plateCountCombData$SampleID <-
     as.numeric(substr(plateCountCombData$SampleID, 5, 8))
 
+  # Amend the column names
+  plateCountCombData <- nameCols(plateCountCombData)
+  colnames(plateCountCombData)[which(colnames(plateCountCombData) == "E.coli")] <- "CfuCount"
+
   mediaTypes <- c("ChromoSelect", "SSA", "BGA", "UK qPCR", "Pak qPCR")
 
   waterData <- plateCountCombData[plateCountCombData$SampleType == "Water", ]
   stoolData <- plateCountCombData[plateCountCombData$SampleType == "Stool", ]
 
-  convertCols <- which(colnames(plateCountCombData) == "E.coli")
+  convertCols <- which(colnames(plateCountCombData) == "CfuCount")
 
   subPlateData <- averageCounts(waterData, waterReps, rawData, convertCols,
-                                "E.coli", "HH")
+                                "E.coli", "HH", TRUE)
   subPlateData <- rbind(subPlateData, averageCounts(stoolData, stoolReps,
                                                     rawData, convertCols,
-                                                    "E.coli", "HH"))
+                                                    "E.coli", "HH", TRUE))
 
-  qPCRData$SampleID <- as.numeric(substr(qPCRData$SampleID, 5, length(qPCRData$SampleID)))
-  qPCRSubData <- cbind(qPCRData[, c(1, 5, 3, 7)], rep(0, nrow(qPCRData)),
-                       rep(0, nrow(qPCRData)), qPCRData[, 20:22])
+  qPCRData <- nameCols(qPCRData)
+  qPCRFirstSelCols <- c(which(colnames(qPCRData) == "SampleID"),
+                        which(colnames(qPCRData) == "SamplingSite"),
+                        which(colnames(qPCRData) == "SampleType"),
+                        which(colnames(qPCRData) == "Replicate"))
+
+  qPCRSecondSelCols <- c(which(colnames(qPCRData) == "MeanCfu"),
+                         which(colnames(qPCRData) == "Household"),
+                         which(colnames(qPCRData) == "Media"))
+
+  qPCRData$SampleID <- as.numeric(substr(qPCRData$SampleID, 5, nchar(qPCRData$SampleID)))
+  qPCRSubData <- cbind(qPCRData[, qPCRFirstSelCols], rep("E.coli", nrow(qPCRData)),
+                       rep(0, nrow(qPCRData)), rep(0, nrow(qPCRData)),
+                       qPCRData[, qPCRSecondSelCols])
 
   colnames(qPCRSubData) <- colnames(subPlateData)
 
@@ -147,7 +162,7 @@ ReadAndBarPlotHHEColiCountsComp <- function(plateCountHHCSFile, plateCountHHSSAF
                                      subPlateData$SampleID), ]
   sampleNumbers <- unique(subPlateData$SampleID)
   subPlateData$SampleID <- factor(subPlateData$SampleID,
-                                     levels = sampleNumbers)
+                                  levels = sampleNumbers)
 
   mediaTypes <- unique(subPlateData$Media)
   subPlateData$Media <- factor(subPlateData$Media, levels = mediaTypes)
@@ -167,7 +182,7 @@ ReadAndBarPlotHHEColiCountsComp <- function(plateCountHHCSFile, plateCountHHSSAF
 
   for (iType in 1:length(sampleTypes))
   {
-    bactSubData <- subSampleHHData(subPlateData, sampleType[iSampleType], mediaTypes)
+    bactSubData <- subCompHHData(subPlateData, sampleType[iSampleType], mediaTypes)
 
     if (sampleType[iType] == "Water")
     {
@@ -177,9 +192,10 @@ ReadAndBarPlotHHEColiCountsComp <- function(plateCountHHCSFile, plateCountHHSSAF
       measureType = "W"
     }
 
-    BarPlotGastroPak(sumData, "", "Media", "HH", "E coli counts", sampleTypes[iType],
+    BarPlotGastroPak(bactSubData, "", "Media", "HH", "E coli counts", sampleTypes[iType],
                      c('darkblue', 'pink',  'lightgreen', 'gold', 'lightgrey'),
-                     "B", 5, plotsDir, sampleTypes[iType])
+                     measureType, 4, plotsDir, paste("Household E. coli",
+                                             sampleTypes[iType]))
   }
 
 }

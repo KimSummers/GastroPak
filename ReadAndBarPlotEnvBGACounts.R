@@ -14,12 +14,14 @@
 #   rawData           - True for absolute counts, false for cfu / ml
 #   sedimentReps      - Number of sediment dilutions
 #   waterReps         - Number of water dilutions
+#   season            - The season the data is from
 
 # Version    Author       Date      Affiliation
 # 1.00       J K Summers  05/01/23  Wellington Lab - School of Life Sciences - University of Warwick
 
 ReadAndBarPlotEnvBGACounts <- function(plateCountEnvBGAFile, plotsDir, metaDataFile,
-                                       rawData, sedimentReps, waterReps) {
+                                       rawData, sedimentReps, waterReps,
+                                       season) {
 
   library(tidyverse)
 
@@ -73,12 +75,12 @@ ReadAndBarPlotEnvBGACounts <- function(plateCountEnvBGAFile, plotsDir, metaDataF
   for (iBacteria in 1:length(bacteriaTypes))
   {
     bactSubData <- subBacteriaEnvData(subPlateData, bacteriaTypes[iBacteria],
-                                      c("Stool", "Water"))
+                                      c("Sediment", "Water"))
 
     BarPlotGastroPak(bactSubData, c("Upstream", "Midstream", "Downstream"), "Sample",
                      "Env", "Brilliant Green Agar Plates", bacteriaTypes[iBacteria],
                      c('chocolate4', 'skyblue'), "B", 3, plotsDir,
-                     paste("BBA", bacteriaTypes[iBacteria]))
+                     paste(season, "BBA", bacteriaTypes[iBacteria]))
   }
 
 }
