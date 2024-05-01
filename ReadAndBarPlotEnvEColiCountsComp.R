@@ -1,8 +1,8 @@
 # ReadAndBarPlotEnvEColiCountsComp
 #
-# Read in plate count and qPCR data and barchart plot it
-# One bar char for the counts on ChromoSelect, one for SSA, one for BGA
-# and one for the qPCR
+# Read in plate count and qPCR data and bar chart plot it
+# One bar chart for the counts on ChromoSelect, one for SSA, one for BGA
+# and one for each of the qPCRs (by country)
 # Group counts by river and order by sample id
 #
 # file ReadAndBarPlotEnvEColiCountsComp

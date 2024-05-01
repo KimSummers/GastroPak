@@ -1,13 +1,13 @@
-# ReadAndBarPlotHHSSACountsBySpecies
+# ReadAndBarPlotHHChromoSelectCountsBySpecies
 #
 # Read in plate count data and barchart plot it
 # One bar chart for the water samples and one for faecal
 # Group counts by house and order by sample type and number
 #
-# file ReadAndBarPlotHHSSACountsBySpecies
+# file ReadAndBarPlotHHChromoSelectCountsBySpecies
 #
 # inputs
-# 	plateCountSSAFile - file containing plate count data
+# 	plateCountCSFile  - file containing plate count data
 #   plotsDir          - directory to store plots in
 #   metaDataFile      - file containing river meta data
 #   rawData           - True for absolute counts, false for cfu / ml
@@ -16,48 +16,45 @@
 #   stream            - Up, mid or down stream
 
 # Version    Author       Date      Affiliation
-# 1.00       J K Summers  26/02/24  Wellington Lab - School of Life Sciences - University of Warwick
+# 1.00       J K Summers  28/04/24  Wellington Lab - School of Life Sciences - University of Warwick
 
-ReadAndBarPlotHHSSACountsBySpecies <- function(plateCountSSAFile, plotsDir,
-                                                metaDataFile, rawData,
-                                                faecalReps, waterReps, stream) {
+ReadAndBarPlotHHChromoSelectCountsBySpecies <- function(plateCountCSFile,
+                                                        plotsDir, metaDataFile,
+                                                        rawData, faecalReps,
+                                                        waterReps, stream) {
 
   library(tidyverse)
 
   # Read in data and put it in a dataframe
-  plateSSACountData <- read_csv(plateCountSSAFile)
+  plateCSCountData <- read_csv(plateCountCSFile)
   metaData <- read_csv(metaDataFile)
   metaData <- metaData[!is.na(metaData$`Sample code`), ]
 
-  plateSSACountData <- numericCounts(plateSSACountData)
+  plateCSCountData <- numericCounts(plateCSCountData)
+  plateCSCountData <- coloursToSpeciesCS(plateCSCountData)
+  plateCSCountData <- nameCols(plateCSCountData)
 
-  waterData <- plateSSACountData[plateSSACountData$`Sample Type` == "Water", ]
-  faecalData <- plateSSACountData[plateSSACountData$`Sample Type` == "Stool", ]
+  waterData <- plateCSCountData[plateCSCountData$SampleType == "Water", ]
+  faecalData <- plateCSCountData[plateCSCountData$SampleType == "Stool", ]
 
   waterData <- fixMissingData(waterData, waterReps)
   faecalData <- fixMissingData(faecalData, faecalReps)
 
-  plateSSACountData <- rbind(waterData, faecalData)
+  plateCSCountData <- rbind(waterData, faecalData)
 
-  plateSSACountData <- coloursToSpeciesSSA(plateSSACountData)
-  plateSSACountData <- nameCols(plateSSACountData)
+  plateCSCountData <- addHouseholds(plateCSCountData, metaData)
 
-  plateSSACountData <- addHouseholds(plateSSACountData, metaData)
+  plateCSCountData$SampleID <-
+    as.numeric(substr(plateCSCountData$SampleID, 5, 8))
 
-  plateSSACountData$SampleID <-
-    as.numeric(substr(plateSSACountData$SampleID, 5, 8))
+  plateCSCountData <- plateCSCountData %>% relocate(Klebsiella, .after = coliforms)
 
-  plateSSACountData <- plateSSACountData %>% relocate(Salmonella,
-                                                      .after = Shigella)
-  plateSSACountData <- plateSSACountData %>% relocate(E.coli,
-                                                      .after = Salmonella)
+  bacteriaTypes <- c("E.coli", "coliforms", "Klebsiella")
 
-  bacteriaTypes <- c("Shigella", "Salmonella", "E.coli")
+  convertCols <- which(colnames(plateCSCountData) %in% bacteriaTypes)
 
-  convertCols <- which(colnames(plateSSACountData) %in% bacteriaTypes)
-
-  waterData <- plateSSACountData[plateSSACountData$SampleType == "Water", ]
-  faecalData <- plateSSACountData[plateSSACountData$SampleType == "Stool", ]
+  waterData <- plateCSCountData[plateCSCountData$SampleType == "Water", ]
+  faecalData <- plateCSCountData[plateCSCountData$SampleType == "Stool", ]
 
   subPlateData <- averageCounts(waterData, waterReps, rawData, convertCols,
                                 bacteriaTypes, "HH")
@@ -98,11 +95,11 @@ ReadAndBarPlotHHSSACountsBySpecies <- function(plateCountSSAFile, plotsDir,
     }
 
     BarPlotGastroPak(graphData = bactSubData, xAxisLabels = NULL, plotType = "Species",
-                     dataType = "HH", mainData = "Salmonella-Shigella agar plates",
+                     dataType = "HH", mainData = "ChromoSelect plates",
                      subData = sampleType[iSampleType],
-                     fillColours = c('grey', 'black', 'pink'),
+                     fillColours = c('darkblue','tomato2', 'pink'),
                      weightOrVol = measureType, rowGraphs = 4, plotsDir = plotsDir,
-                     plotTitle = paste("Household", stream, "SSA", sampleType[iSampleType]))
+                     plotTitle = paste("Household", stream, "CS", sampleType[iSampleType]))
   }
 
 }

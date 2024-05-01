@@ -123,6 +123,11 @@ numericCounts <- function(countData) {
     countData$`Colorless with Black Centre` <- as.numeric(countData$`Colorless with Black Centre`)
   }
 
+  if (!is_empty(which(colnames(countData) == "Yellow/ Yellowish green")))
+  {
+    countData$`Yellow/ Yellowish green` <- as.numeric(countData$`Yellow/ Yellowish green`)
+  }
+
   countData$Total <- as.numeric(countData$Total)
 
   return(countData)

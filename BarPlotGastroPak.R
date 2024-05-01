@@ -1,6 +1,6 @@
 # BarPlotGastroPak
 #
-# Barchart plot GastroPak data
+# Bar chart plot GastroPak data
 #
 # file BarPlotGastroPak
 #
@@ -20,7 +20,7 @@
 #
 # Version    Author       Date      Affiliation
 # 1.00       J K Summers  20/12/23  Wellington Lab - School of Life Sciences - University of Warwick
-BarPlotGastroPak <- function(graphData, xAxisLabels, plotType, dataType, mainData,
+BarPlotGastroPak <- function(graphData, xAxisLabels = NULL, plotType, dataType, mainData,
                              subData, fillColours, weightOrVol, rowGraphs,
                              plotsDir, plotTitle) {
 
@@ -156,7 +156,10 @@ BarPlotGastroPak <- function(graphData, xAxisLabels, plotType, dataType, mainDat
 
   gpPlot <- gpPlot + scale_y_continuous(trans = 'log10')
 
-  gpPlot <- gpPlot + scale_x_discrete(xAxisLabels)
+  if (!is.null(xAxisLabels))
+  {
+    gpPlot <- gpPlot + scale_x_discrete(labels = xAxisLabels)
+  }
 
   gpPlot
 

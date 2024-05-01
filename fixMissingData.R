@@ -1,9 +1,6 @@
 # fixMissingData
 #
-# Read in plate count data and barchart plot it
-# One bar char for the E. coli counts, one for Klebsiella, one for Salmonella / Shigella
-# and one for the coliforms
-# Group counts by river and order by site
+# Fix gaps in isolations data
 #
 # file fixMissingData
 #
@@ -36,12 +33,12 @@ for (iRow in (1:(nrow(fixData) / fixCount)))
 
 for (iRow in (1:(nrow(fixData) / fixReps)))
 {
-  fixData$`Sampling Code`[((iRow - 1) * fixReps + 2):((iRow - 1) * fixReps + fixReps)] <-
-    fixData$`Sampling Code`[((iRow - 1) * fixReps + 1)]
+  fixData$`SamplingCode`[((iRow - 1) * fixReps + 2):((iRow - 1) * fixReps + fixReps)] <-
+    fixData$`SamplingCode`[((iRow - 1) * fixReps + 1)]
   fixData$Replicate[((iRow - 1) * fixReps + 2):((iRow - 1) * fixReps + fixReps)] <-
     fixData$Replicate[((iRow - 1) * fixReps + 1)]
-  fixData$`Sample-ID`[((iRow - 1) * fixReps + 2):((iRow - 1) * fixReps + fixReps)] <-
-    fixData$`Sample-ID`[((iRow - 1) * fixReps + 1)]
+  fixData$`SampleID`[((iRow - 1) * fixReps + 2):((iRow - 1) * fixReps + fixReps)] <-
+    fixData$`SampleID`[((iRow - 1) * fixReps + 1)]
 }
 
 return(fixData)

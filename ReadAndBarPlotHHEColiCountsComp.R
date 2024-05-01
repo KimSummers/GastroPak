@@ -1,7 +1,7 @@
 # ReadAndBarPlotHHEColiCountsComp
 #
 # Read in plate count and qPCR data and barchart plot it
-# One bar char for the counts on ChromoSelect, one for SSA, one for BGA
+# One bar chart for the counts on ChromoSelect, one for SSA, one for BGA
 # and one for the qPCR
 # Group counts by household and order by household, sample type and sample id
 #
@@ -13,9 +13,9 @@
 # 	plateCountHHBGAFile - file containing plate count data on BGA
 # 	qPCRFile            - file containing qPCR data
 #   metaDataFile        - file containing meta data about the samples
-#   rawData           - True for absolute counts, false for cfu / ml
-#   stoolReps         - Number of stool dilutions
-#   waterReps         - Number of water dilutions
+#   rawData             - True for absolute counts, false for cfu / ml
+#   feacalReps          - Number of faecal dilutions
+#   waterReps           - Number of water dilutions
 #   plotsDir            - directory to store plots in
 
 # Version    Author       Date      Affiliation
@@ -23,7 +23,7 @@
 
 ReadAndBarPlotHHEColiCountsComp <- function(plateCountHHCSFile, plateCountHHSSAFile,
                                             plateCountHHBGAFile, qPCRFile,
-                                            waterReps, stoolReps,
+                                            waterReps, feacalReps,
                                             metaDataFile, plotsDir) {
 
   # First load any libraries needed
@@ -43,12 +43,11 @@ ReadAndBarPlotHHEColiCountsComp <- function(plateCountHHCSFile, plateCountHHSSAF
 
   qPCRData <- nameCols(qPCRData)
 
-  # Only want E. coli stool samples
+  # Only want E. coli faecal samples
   qPCRData <- qPCRData[(qPCRData$Target == "E. coli") & (qPCRData$Season == "Household"), ]
 
   # Ensure all the counts data is numeric
   plateCSCountData <- numericCounts(plateCSCountData)
-  plateCSCountData <- plateCSCountData[, 1:(ncol(plateCSCountData) - 3)]
 
   plateSSACountData <- numericCounts(plateSSACountData)
   plateBGACountData <- numericCounts(plateBGACountData)
@@ -105,12 +104,12 @@ ReadAndBarPlotHHEColiCountsComp <- function(plateCountHHCSFile, plateCountHHSSAF
                               plateBGACountData[selBGACols])
 
   waterData <- plateCountCombData[plateCountCombData$SampleType == "Water", ]
-  stoolData <- plateCountCombData[plateCountCombData$SampleType == "Stool", ]
+  faecalData <- plateCountCombData[plateCountCombData$SampleType == "Stool", ]
 
   waterData <- fixMissingData(waterData, waterReps)
-  stoolData <- fixMissingData(stoolData, stoolReps)
+  faecalData <- fixMissingData(faecalData, faecalReps)
 
-  plateCountCombData <- rbind(waterData, stoolData)
+  plateCountCombData <- rbind(waterData, faecalData)
   plateCountCombData <- addHouseholds(plateCountCombData, metaData)
 
   qPCRData <- addHouseholds(qPCRData, metaData)
@@ -126,13 +125,13 @@ ReadAndBarPlotHHEColiCountsComp <- function(plateCountHHCSFile, plateCountHHSSAF
   mediaTypes <- c("ChromoSelect", "SSA", "BGA", "UK qPCR", "Pak qPCR")
 
   waterData <- plateCountCombData[plateCountCombData$SampleType == "Water", ]
-  stoolData <- plateCountCombData[plateCountCombData$SampleType == "Stool", ]
+  faecalData <- plateCountCombData[plateCountCombData$SampleType == "Stool", ]
 
   convertCols <- which(colnames(plateCountCombData) == "CfuCount")
 
   subPlateData <- averageCounts(waterData, waterReps, rawData, convertCols,
                                 "E.coli", "HH", TRUE)
-  subPlateData <- rbind(subPlateData, averageCounts(stoolData, stoolReps,
+  subPlateData <- rbind(subPlateData, averageCounts(faecalData, faecalReps,
                                                     rawData, convertCols,
                                                     "E.coli", "HH", TRUE))
 
@@ -157,7 +156,8 @@ ReadAndBarPlotHHEColiCountsComp <- function(plateCountHHCSFile, plateCountHHSSAF
 
   subPlateData$MeanCfu <- as.numeric(subPlateData$MeanCfu)
 
-  subPlateData <- subPlateData[order(as.numeric(substr(subPlateData$Household, 11, length(subPlateData$Household))),
+  subPlateData <- subPlateData[order(as.numeric(substr(subPlateData$Household, 11,
+                                                       length(subPlateData$Household))),
                                      subPlateData$SampleType,
                                      subPlateData$SampleID), ]
   sampleNumbers <- unique(subPlateData$SampleID)
@@ -178,7 +178,7 @@ ReadAndBarPlotHHEColiCountsComp <- function(plateCountHHCSFile, plateCountHHSSAF
   subPlateData$Household <- factor(subPlateData$Household,
                                    levels = households)
 
-  sampleTypes <- c("Stool", "Water")
+  sampleTypes <- c("Feacal", "Water")
 
   for (iType in 1:length(sampleTypes))
   {

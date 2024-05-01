@@ -1,6 +1,6 @@
 # ReadAndBarPlotHHSalmonellaCountsComp
 #
-# Read in plate counts and qPCR data and barchart plot it
+# Read in plate counts and qPCR data and bar chart plot it
 # One bar char for the counts on SSA, one for BGA and one for the qPCR
 # Group counts by household and order by household, sample type and sample id
 #
@@ -11,8 +11,8 @@
 # 	plateCountHHBGAFile - file containing plate count data on BGA
 # 	qPCRFile            - file containing qPCR data
 #   metaDataFile        - file containing meta data about the samples
-#   faecallReps         - Number of faecal dilutions
 #   waterReps           - Number of water dilutions
+#   faecallReps         - Number of faecal dilutions
 #   plotsDir            - directory to store plots in
 
 # Version    Author       Date      Affiliation
@@ -161,7 +161,7 @@ ReadAndBarPlotHHSalmonellaCountsComp <- function(plateCountHHSSAFile,
 
   for (iType in 1:length(sampleTypes))
   {
-    bactSubData <- subCompHHData(subPlateData, sampleType[iSampleType], mediaTypes)
+    bactSubData <- subCompHHData(subPlateData, sampleType[iSampleType])
 
     if (sampleType[iType] == "Water")
     {

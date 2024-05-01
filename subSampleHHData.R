@@ -14,46 +14,17 @@
 
 subSampleHHData <- function(countData, sampleType, bacteriaTypes) {
 
-  subData <- subPlateData[subPlateData$SampleType == sampleType, ]
+  subsetData <- countData[countData$SampleType == sampleType, ]
   groupLength <- 3 * length(bacteriaTypes)
 
-  firstCols <- c(which(colnames(subData) == "SampleID"),
-                 which(colnames(subData) == "SamplingSite"),
-                 which(colnames(subData) == "Replicate"))
-  secondCols <- c(which(colnames(subData) == "Household"))
+  firstCols <- c(which(colnames(subsetData) == "SampleID"),
+                 which(colnames(subsetData) == "SamplingSite"),
+                 which(colnames(subsetData) == "Replicate"))
+  secondCols <- c(which(colnames(subsetData) == "Household"))
 
-  for (iRow in (1:(nrow(subData) / groupLength)))
-  {
+  sumData <- subData(subsetData, groupLength, bacteriaTypes, "HH", "Bacteria",
+                     firstCols, secondCols)
 
-    for (iBacteria in 1:length(bacteriaTypes))
-    {
-      meanVal <- mean(subData$MeanCfu[(subData$SampleID ==
-                                         subData$SampleID[iRow * groupLength]) &
-                                        (subData$Bacteria == bacteriaTypes[iBacteria])],
-                      na.rm = TRUE)
-      sdVal <- sd(subData$MeanCfu[(subData$SampleID ==
-                                     subData$SampleID[iRow * groupLength]) &
-                                    (subData$Bacteria == bacteriaTypes[iBacteria])],
-                  na.rm = TRUE)
-      sumDataRow <- cbind(subData[iRow * groupLength, firstCols],
-                          bacteriaTypes[iBacteria], meanVal, sdVal,
-                          subData[iRow * groupLength, secondCols])
-
-      colnames(sumDataRow)[length(firstCols) + 1] <- "Bacteria"
-
-      if ((iRow == 1) & (iBacteria == 1))
-      {
-        sumData <- sumDataRow
-      }else
-      {
-        sumData <- rbind(sumData, sumDataRow)
-      }
-
-    }
-
-  }
-
-  sumData$meanVal[sumData$meanVal == 0] <- NaN
   sumData$Bacteria <- factor(sumData$Bacteria, levels = unique(sumData$Bacteria))
   sumData <- sumData[order(sumData$SamplingSite), ]
   colnames(sumData)[(length(firstCols) + 2):ncol(sumData)] <-

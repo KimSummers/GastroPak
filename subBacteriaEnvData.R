@@ -14,47 +14,18 @@
 
 subBacteriaEnvData <- function(countData, bacteriaType, sampleTypes) {
 
-  subData <- countData[countData$Bacteria == bacteriaType, ]
+  subsetData <- countData[countData$Bacteria == bacteriaType, ]
   groupLength <- 3 * length(sampleTypes)
 
-  firstCols <- c(which(colnames(subData) == "SamplingCode"),
-                 which(colnames(subData) == "SamplingSite"),
-                 which(colnames(subData) == "Replicate"))
-  secondCols <- c(which(colnames(subData) == "River"),
-                  which(colnames(subData) == "Location"))
+  firstCols <- c(which(colnames(subsetData) == "SamplingCode"),
+                 which(colnames(subsetData) == "SamplingSite"),
+                 which(colnames(subsetData) == "Replicate"))
+  secondCols <- c(which(colnames(subsetData) == "River"),
+                  which(colnames(subsetData) == "Location"))
 
-  for (iRow in (1:(nrow(subData) / groupLength)))
-  {
+  sumData <- subData(subsetData, groupLength, sampleTypes, "Env", "SampleType",
+                     firstCols, secondCols)
 
-    for (iSample in 1:length(sampleTypes))
-    {
-      meanVal <- mean(subData$MeanCfu[(subData$SamplingSite ==
-                                         subData$SamplingSite[iRow * groupLength]) &
-                                        (subData$SampleType == sampleTypes[iSample])],
-                      na.rm = TRUE)
-      sdVal <- sd(subData$MeanCfu[(subData$SamplingSite ==
-                                     subData$SamplingSite[iRow * groupLength]) &
-                                    (subData$SampleType == sampleTypes[iSample])],
-                  na.rm = TRUE)
-      sumDataRow <- cbind(subData[iRow * groupLength, firstCols],
-                          sampleTypes[iSample], meanVal, sdVal,
-                          subData[iRow * groupLength, secondCols])
-
-      colnames(sumDataRow)[length(firstCols) + 1] <- "SampleType"
-
-      if ((iRow == 1) & (iSample == 1))
-      {
-        sumData <- sumDataRow
-      }else
-      {
-        sumData <- rbind(sumData, sumDataRow)
-      }
-
-    }
-
-  }
-
-  sumData$meanVal[sumData$meanVal == 0] <- NaN
   sumData$SampleType <- factor(sumData$SampleType, levels = unique(sumData$SampleType))
   sumData <- sumData[order(sumData$SamplingSite), ]
   colnames(sumData)[(length(firstCols) + 2):ncol(sumData)] <-

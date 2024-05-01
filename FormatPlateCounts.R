@@ -6,19 +6,21 @@
 # file FormatPlateCounts
 #
 # inputs
-# 	plateCountData    - Plate count data
-# 	mediaType         - "ChromoSelect", "BGA" or "SSA"
-#   formattedDir      - directory to store formatted files in
-#   metaDataFile      - file containing river meta data
-#   rawData           - True for absolute counts, false for cfu / ml
-#   sedimentReps      - Number of sediment dilutions
-#   waterReps         - Number of water dilutions
+# 	plateCountData      - Plate count data
+# 	mediaType           - "ChromoSelect", "BGA" or "SSA"
+#   formattedDir        - directory to store formatted files in
+#   metaDataFile        - file containing river meta data
+#   rawData             - True for absolute counts, false for cfu / ml
+#   otherReps           - Number of sediment or faecal dilutions
+#   waterReps           - Number of water dilutions
+#   campaignType        - "Env" for environmental and "HH" for household
 
 # Version    Author       Date      Affiliation
 # 1.00       J K Summers  02/08/23  Wellington Lab - School of Life Sciences - University of Warwick
 
 FormatPlateCounts <- function(plateCountData, mediaType, plotsDir, formattedDir,
-                              rawData, sedimentReps, waterReps)
+                              rawData, otherReps, waterReps,
+                              campaignType)
 {
   library(tidyverse)
 
@@ -27,11 +29,18 @@ FormatPlateCounts <- function(plateCountData, mediaType, plotsDir, formattedDir,
   plateCountData <- numericCounts(plateCountData)
 
   waterData <- plateCountData[plateCountData$`Sample Type` == "Water", ]
-  sedimentData <- plateCountData[plateCountData$`Sample Type` == "Sediment", ]
+
+  if (campaignType == "Env")
+  {
+    otherData <- plateCountData[plateCountData$`Sample Type` == "Sediment", ]
+  }else
+  {
+    otherData <- plateCountData[plateCountData$`Sample Type` == "Stool", ]
+  }
 
   waterData <- fixMissingData(waterData)
-  sedimentData <- fixMissingData(sedimentData)
-  plateCountData <- rbind(waterData, sedimentData)
+  otherData <- fixMissingData(otherData)
+  plateCountData <- rbind(waterData, otherData)
 
   if (mediaType == "ChromoSelect")
   {
@@ -77,12 +86,19 @@ FormatPlateCounts <- function(plateCountData, mediaType, plotsDir, formattedDir,
   }
 
   waterData <- plateCountData[plateCountData$SampleType == "Water", ]
-  sedimentData <- plateCountData[plateCountData$SampleType == "Sediment", ]
+
+  if (campaignType == "Env")
+  {
+    otherData <- plateCountData[plateCountData$SampleType == "Sediment", ]
+  }else
+  {
+    otherData <- plateCountData[plateCountData$SampleType == "Stool", ]
+  }
 
   if (!rawData)
   {
     plateCountData <- convertCfuCounts(waterData, waterReps, convertCols)
-    plateCountData <- rbind(plateCountData, convertCfuCounts(sedimentData, sedimentReps,
+    plateCountData <- rbind(plateCountData, convertCfuCounts(otherData, otherReps,
                                                              convertCols))
   }
 
