@@ -13,6 +13,8 @@
 
 addSamplingSite <- function(baseData, metaData) {
 
+  samplingData <- NULL
+
   for (iRow in 1:nrow(baseData))
   {
     samplingSite <- metaData$Site_ID[metaData$Barcode == baseData$SampleID[iRow]]
@@ -20,14 +22,7 @@ addSamplingSite <- function(baseData, metaData) {
     seasonWD <- metaData$Season_WD[metaData$Barcode == baseData$SampleID[iRow]]
     season <- paste(seasonHC, seasonWD)
 
-    if (iRow == 1)
-    {
-      samplingData <- cbind(samplingSite, season)
-    }else
-    {
-      samplingData <- rbind(samplingData, cbind(samplingSite, season))
-    }
-
+    samplingData <- rbind(samplingData, cbind(samplingSite, season))
   }
 
   baseData <- cbind(baseData, samplingData)

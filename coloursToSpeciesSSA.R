@@ -12,6 +12,8 @@
 
 coloursToSpeciesSSA <- function(countData) {
 
+  eColiCounts <- NULL
+
   for (iRow in 1:nrow(countData))
   {
     eColiCount <- sum(countData$`Pink, Bile precipitate`[iRow],
@@ -19,35 +21,24 @@ coloursToSpeciesSSA <- function(countData) {
                       countData$`Red/Orange`[iRow],
                       countData$`Red to Pink`[iRow])
 
-    if (iRow == 1)
-    {
-      eColiCounts <- eColiCount
-    }else
-    {
-      eColiCounts <- rbind(eColiCounts, eColiCount)
-    }
-
+    eColiCounts <- rbind(eColiCounts, eColiCount)
   }
 
   countData <- cbind(countData, eColiCounts)
   rownames(countData) <- 1:nrow(countData)
 
+  shigellaCounts <- NULL
+
   for (iRow in 1:nrow(countData))
   {
     shigellaCount <- sum(countData$Colorless[iRow], countData$Yellow[iRow])
 
-
-    if (iRow == 1)
-    {
-      shigellaCounts <- shigellaCount
-    }else
-    {
-      shigellaCounts <- rbind(shigellaCounts, shigellaCount)
-    }
-
+    shigellaCounts <- rbind(shigellaCounts, shigellaCount)
   }
 
   countData <- cbind(countData, shigellaCounts)
+
+  salmonellaCounts <- NULL
 
   for (iRow in 1:nrow(countData))
   {
@@ -57,14 +48,7 @@ coloursToSpeciesSSA <- function(countData) {
                            countData$`Colorless with Black Centre`[iRow],
                            countData$`Colorless with Brown Center`[iRow])
 
-    if (iRow == 1)
-    {
-      salmonellaCounts <- salmonellaCount
-    }else
-    {
-      salmonellaCounts <- rbind(salmonellaCounts, salmonellaCount)
-    }
-
+    salmonellaCounts <- rbind(salmonellaCounts, salmonellaCount)
   }
 
   countData <- cbind(countData, salmonellaCounts)

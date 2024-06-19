@@ -13,19 +13,13 @@
 
 addHouseholds <- function(countData, metaData) {
 
+  households <- NULL
+  
   for (iRow in 1:nrow(countData))
   {
     household <- paste("Household", metaData$Household[metaData$`Sample ID` ==
                                                          countData$SampleID[iRow]])
-
-    if (iRow == 1)
-    {
-      households <- household
-    }else
-    {
-      households <- rbind(households, household)
-    }
-
+    households <- rbind(households, household)
   }
 
   countData <- cbind(countData, households)

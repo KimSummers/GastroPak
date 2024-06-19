@@ -30,17 +30,16 @@ ReadAndBarPlotHHSSACountsBySpecies <- function(plateCountSSAFile, plotsDir,
   metaData <- metaData[!is.na(metaData$`Sample code`), ]
 
   plateSSACountData <- numericCounts(plateSSACountData)
+  plateSSACountData <- coloursToSpeciesSSA(plateSSACountData)
+  plateSSACountData <- nameCols(plateSSACountData)
 
-  waterData <- plateSSACountData[plateSSACountData$`Sample Type` == "Water", ]
-  faecalData <- plateSSACountData[plateSSACountData$`Sample Type` == "Stool", ]
+  waterData <- plateSSACountData[plateSSACountData$SampleType == "Water", ]
+  faecalData <- plateSSACountData[plateSSACountData$SampleType == "Stool", ]
 
   waterData <- fixMissingData(waterData, waterReps)
   faecalData <- fixMissingData(faecalData, faecalReps)
 
   plateSSACountData <- rbind(waterData, faecalData)
-
-  plateSSACountData <- coloursToSpeciesSSA(plateSSACountData)
-  plateSSACountData <- nameCols(plateSSACountData)
 
   plateSSACountData <- addHouseholds(plateSSACountData, metaData)
 

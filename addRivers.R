@@ -13,19 +13,14 @@
 
 addRivers <- function(countData, metaData) {
 
+  rivers <- NULL
+
   for (iRow in 1:nrow(countData))
   {
     river <- metaData$River[metaData$`Sampling Site` == countData$SamplingSite[iRow]]
     sampleLoc <- metaData$Location[metaData$`Sampling Site` == countData$SamplingSite[iRow]]
 
-    if (iRow == 1)
-    {
-      rivers <- cbind(river, sampleLoc)
-    }else
-    {
-      rivers <- rbind(rivers, cbind(river, sampleLoc))
-    }
-
+    rivers <- rbind(rivers, cbind(river, sampleLoc))
   }
 
   countData <- cbind(countData, rivers)
