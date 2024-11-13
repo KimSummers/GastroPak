@@ -97,7 +97,7 @@ GPMetagenomicsNMDSGenusSeasonal <- function(metagenomicDataFile, metaDataFile,
   # Calculate distance matrix - make distance matrix data frame - write .csv
   genusDistMat <- vegdist(genus.rel, method = "bray")
   genusDistanceMatrix <- as.matrix(genusDistMat, labels = T)
-  write.csv(genusDistanceMatrix, paste(dataDir, season, " GenusDistMat.csv", sep = ""))
+  write.csv(genusDistanceMatrix, paste(dataDir, season, " Genus DistMat.csv", sep = ""))
 
   # Running NMDS in vegan (metaMDS)
   genusNMS <- metaMDS(genusDistMat, distance = "bray", k = 2, maxit = 999,
@@ -105,13 +105,13 @@ GPMetagenomicsNMDSGenusSeasonal <- function(metagenomicDataFile, metaDataFile,
   genusScores <- `sppscores<-`(genusNMS, mgGenusWide)
   genusCorrelation <- cor(mgGenusWide, genusNMS$points, use = "complete.obs",
                           method = "pearson")
-  write.csv(genusCorrelation, file = paste(dataDir, season, " genus_PearsonCor.csv", sep = ""))
+  write.csv(genusCorrelation, file = paste(dataDir, season, " Genus PearsonCor.csv", sep = ""))
 
   # Shepards test/goodness of fit
   fitGoodness <- goodness(genusNMS)
   stressplot(genusNMS)
 
-  pdf(file = paste(plotsDir, season, " GenusStressPlot.pdf", sep = ""))
+  pdf(file = paste(plotsDir, season, " Genus StressPlot.pdf", sep = ""))
   stressplot(genusNMS)
   dev.off()
 
@@ -251,12 +251,18 @@ GPMetagenomicsNMDSGenusSeasonal <- function(metagenomicDataFile, metaDataFile,
   perm <- 999
   test1 <- adonis2(genus_dist~River, data = meta_dist, permutations = perm,
                    method = euclidean)
+  
+  write.csv(test1, file = paste(dataDir, season, " Genus river sig.csv", sep = ""))
+  
   # sig p = 0.001
   test2 <- adonis2(genus_dist~River*RiverLocation, data = meta_dist, permutations = perm,
                    method=euclidean)
-  #River p = 0.001, Campaign p = 0.001, River * Campaign p = 0.001
+  write.csv(test2, file = paste(dataDir, season, " Genus river and location sig.csv", sep = ""))
+
+    #River p = 0.001, Campaign p = 0.001, River * Campaign p = 0.001
   test3 <- adonis2(genus_dist~RiverLocation, data = meta_dist, permutations=perm,
                    method = euclidean)
+  write.csv(test3, file = paste(dataDir, season, " Genus location sig.csv", sep = ""))
   # sig p=0.001
 
   # Run pairwise adonis tests (change location/month to check for each)

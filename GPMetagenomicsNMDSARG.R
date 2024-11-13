@@ -385,17 +385,23 @@ GPMetagenomicsNMDSAMR <- function(metagenomicDataFile, metaDataFile, riversFile,
   perm <- 999
   test1 <- adonis2(amr_dist~River, data = meta_dist, permutations = perm,
                    method = euclidean)
+  write.csv(test1, file = paste(dataDir, season, " ARG river sig.csv", sep = ""))
+  
   # sig p = 0.001
   test2 <- adonis2(amr_dist~River*Campaign, data = meta_dist, permutations = perm,
                    method=euclidean)
+  write.csv(test2, file = paste(dataDir, season, " ARG river and campaign sig.csv", sep = ""))
+
   #River p = 0.001, Campaign p = 0.001, River * Campaign p = 0.001
   test3 <- adonis2(amr_dist~Campaign, data = meta_dist, permutations=perm,
                    method = euclidean)
   # sig p=0.001
-
+  write.csv(test3, file = paste(dataDir, season, " ARG campaign sig.csv", sep = ""))
+  
   test8 <- adonis2(amr_dist~RiverLocation*Campaign*River, data = meta_dist, permutations=perm,
                    method = euclidean)
-
+  write.csv(test8, file = paste(dataDir, season, " ARG location, campaign and river sig.csv", sep = ""))
+  
   # Run pairwise adonis tests (change location/month to check for each)
   # pairwise_adonis_results <- pairwise.perm.manova(amr_dist, wimp_wide_env$River_loc, nperm = 999, p.method = "bonferroni")
   # pairwise perm manova not working! can't find function

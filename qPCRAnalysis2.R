@@ -16,42 +16,12 @@
 #
 # Version    Author       Date      Affiliation
 # 1.00       J K Summers  26/03/24  Wellington Lab - School of Life Sciences - University of Warwick
-qPCRAnalysis <- function(qPCRFileName, dilutionFileName, weightFile, qPCRSumData) {
+qPCRAnalysis2 <- function(qPCRFileName, qPCRSumData) {
 
   library(purrr)
   library(readxl)
 
-  dilutions <- read_xlsx(dilutionFileName)
-  weights <- read_xlsx(weightFile)
-
-  colnames(weights)[which(colnames(weights) == "Weight or volume")] <- "Weight"
-  colnames(weights)[which(colnames(weights) == "Sample Id")] <- "Sample ID"
-  colnames(weights)[which(colnames(weights) == "Sample")] <- "Sample ID"
-  weights <- weights[!is.na(weights$`Sample ID`), ]
-
-  weights$Weight[weights$Weight == "250 ml"] <- 250
-
-  colnames(dilutions)[which(colnames(dilutions) == "Sample Id")] <- "Sample ID"
-  colnames(dilutions)[which(colnames(dilutions) == "Vol.  DNA")] <- "Vol DNA"
-  colnames(dilutions)[which(colnames(dilutions) == "Vol. DNA")] <- "Vol DNA"
-  dilutions <- dilutions[!is.na(dilutions$`Sample ID`), ]
-  weights$Weight <- as.numeric(weights$Weight)
-
-  for (iWeight in 1:nrow(weights))
-  {
-    posG <- unlist(gregexpr("g", weights$Weight[iWeight]))
-
-    if (posG > 0)
-    {
-      weights$Weight[iWeight] <- substr(weights$Weight[iWeight], 1, (posG - 2))
-    }
-
-  }
-
-  weights$Weight <- as.numeric(weights$Weight)
-  dilutions$`Vol DNA` <- as.numeric(dilutions$`Vol DNA`)
-
-  qPCRData <- read_xls(qPCRFileName, sheet = "Results")
+  qPCRData <- read_excel(qPCRFileName, sheet = "Results")
   startRow <- which(qPCRData$`Block Type` == "Well")
 
   colnames(qPCRData) <- qPCRData[startRow, ]
@@ -105,8 +75,8 @@ qPCRAnalysis <- function(qPCRFileName, dilutionFileName, weightFile, qPCRSumData
     }
 
     sampleRow <- sampleData[1, ]
-    volDNA <- dilutions$`Vol DNA`[dilutions$`Sample ID` == sampleRow$`Sample Name`]
-    weightSample <- weights$Weight[weights$`Sample ID` == sampleRow$`Sample Name`]
+    volDNA <- 35
+    weightSample <- 250
 
     if (is.numeric(meanGeneCopy))
     {

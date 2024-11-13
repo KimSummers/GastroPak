@@ -1,6 +1,6 @@
 # resistomapHeatmap
 #
-# Heatmap resistomap data for GastroPak - code adapted from code supplied by Emma Travis
+# Heatmap ResistoMap data for GastroPak - code adapted from code supplied by Emma Travis
 #
 # file resistomapHeatmap
 #
@@ -30,184 +30,200 @@ resistomapHeatmap <- function(dataFile, metaDataFile, sampleNumber, plotsDir) {
   library(vegan)
   library(ggmap)
 
-  # ---- import metadata file and gene annotation file; create colour annotation per groups -----
-  # use tidyverse and dplyr
   metaData <- read.delim(metaDataFile, sep = ",")
   metaData <- metaData[1:sampleNumber, ]
   colnames(metaData)[which(colnames(metaData) == "Site_ID")] <- "SamplingSite"
 
   riversData <- read_csv(file = riversFile)
-riversData$River[7:9] <- "Jinnah"
-riversData$River[10:12] <- "Korang"
-metaData <- addRivers(countData = metaData, metaData = riversData)
-colnames(metaData)[which(colnames(metaData) == "SamplingSite")] <- "Site_ID"
-metaData$Sample_type[metaData$Sample_type == "River_water"] <- "River water"
-metaData$Sample_type[metaData$Sample_type == "River_sediment"] <- "River sediment"
-colnames(metaData)[which(colnames(metaData) == "RiverLocation")] <- "River Location"
-colnames(metaData)[which(colnames(metaData) == "Sample_type")] <- "Sample Type"
+  riversData$River[7:9] <- "Jinnah"
+  riversData$River[10:12] <- "Korang"
+  
+  metaData <- addRivers(countData = metaData, metaData = riversData)
+  
+  colnames(metaData)[which(colnames(metaData) == "SamplingSite")] <- "Site_ID"
+  metaData$Sample_type[metaData$Sample_type == "River_water"] <- "River water"
+  metaData$Sample_type[metaData$Sample_type == "River_sediment"] <- "River sediment"
+  colnames(metaData)[which(colnames(metaData) == "RiverLocation")] <- "River Location"
+  colnames(metaData)[which(colnames(metaData) == "Sample_type")] <- "Sample Type"
 
-# ---- import datasets -----# use tidyverse and dplyr
-rmData <- read.csv(rmFile)
+  rmData <- read.csv(rmFile)
+  
+  # transform rmData into long format 
+  rmDataLong <- pivot_longer(rmData, cols = starts_with("PAK"), names_to = "Sample_ID",
+                             values_to = "relative_abundance")
 
-# ---- transformed rmData into long format -----# use tidyverse and dplyr
-rmDataLong <- pivot_longer(rmData, cols = starts_with("PAK"),
-                           names_to = "Sample_ID",
-                           values_to = "relative_abundance")
+  #statistical analysis
+  # test for normality
+  ggdensity(rmDataLong$relative_abundance, fill = "lightgray")
+  ggqqplot(rmDataLong$relative_abundance)
+  shapiro.test(rmDataLong$relative_abundance)
 
-#---STATISTICAL ANALYSIS----
-#--- test for normality----
-ggdensity(rmDataLong$relative_abundance, fill = "lightgray")
-ggqqplot(rmDataLong$relative_abundance)
-shapiro.test(rmDataLong$relative_abundance)
+  # Shapiro-Wilk normality test
+  # data:  rmDataLong$relative_abundance
 
-# Shapiro-Wilk normality test
-# data:  rmDataLong$relative_abundance
-# W = 0.3279, p-value < 2.2e-16
-# DATA ARE NOT NORMALLY DISTRIBUTED
+  # use log10 and NA instead of 0 values and test again for normality
+  rmDataLongLog <- mutate(rmDataLong, Log_RA = log10(rmDataLong$relative_abundance))
 
-# use log10 and NA instead of 0 values and test again for normality
-rmDataLongLog <- mutate(rmDataLong, Log_RA = log10(rmDataLong$relative_abundance))
+  ggdensity(rmDataLongLog$Log_RA, fill = "lightgray")
+  ggqqplot(rmDataLongLog$Log_RA)
+  shapiro.test(rmDataLongLog$Log_RA)
 
-ggdensity(rmDataLongLog$Log_RA, fill = "lightgray")
-ggqqplot(rmDataLongLog$Log_RA)
-shapiro.test(rmDataLongLog$Log_RA)
+  # Shapiro-Wilk normality test
+  # data:  rmDataLongLog$Log_RA
 
-# Shapiro-Wilk normality test
-# data:  rmDataLongLog$Log_RA
-# W = 0.94087, p-value < 2.2e-16
-# DATA ARE CLOSER TO NROMALLY DISTRIBUTED (W=1)
+  colnames(metaData)[which(colnames(metaData) == "Sample_ID")] <- "Location_ID"
+  colnames(metaData)[which(colnames(metaData) == "Barcode")] <- "Sample_ID"
 
-colnames(metaData)[which(colnames(metaData) == "Sample_ID")] <- "Location_ID"
-colnames(metaData)[which(colnames(metaData) == "Barcode")] <- "Sample_ID"
+  # add sample metadata using sample ID to merge files
+  rmDataLongLog <- full_join(rmDataLongLog, metaData, by = "Sample_ID")
 
-# add sample metadata using sample ID to merge files
-rmDataLongLog <- full_join(rmDataLongLog, metaData, by = "Sample_ID")
+  # boxplot all targets
+  plot <- ggboxplot(rmDataLongLog, x = "Sample_ID", y = "Log_RA", color = "Sample Type")
+  plot <- facet(plot, facet.by = "group", ncol = 3) + rotate_x_text(angle = 90)
+  plot <- plot + theme(axis.text = element_text(size = 8))
+  plot <- plot + theme(axis.title = element_text(size = 10))
+  plot
 
-#---BOXPLOTS all targets
-plot <- ggboxplot(rmDataLongLog, x = "Sample_ID", y = "Log_RA", color = "Sample Type",
-                  )
-plot <- facet(plot, facet.by = "group", ncol = 3) + rotate_x_text(angle = 90)
-plot <- plot + theme(axis.text = element_text(size = 8))
-plot <- plot + theme(axis.title = element_text(size = 10))
-plot
-ggsave(paste(plotsDir, "Log RA sample type comp.pdf", sep = ""), plot, height = 20,
-       width = 20)
+  ggsave(paste(plotsDir, "Log RA sample type comp.pdf", sep = ""), plot, height = 20,
+         width = 20)
 
-plot <- ggboxplot(rmDataLongLog, x = "Sample Type", y = "Log_RA", color = "Site_ID")
-facet(plot, facet.by = "group", ncol = 3) + rotate_x_text(angle = 90)
+  plot <- ggboxplot(rmDataLongLog, x = "Sample Type", y = "Log_RA", color = "Site_ID")
+  facet(plot, facet.by = "group", ncol = 3) + rotate_x_text(angle = 90)
 
-plot <- ggboxplot(rmDataLongLog, x = "Sample Type", y = "Log_RA", color = "Location_ID")
-facet(plot, facet.by = "group", ncol = 3) + rotate_x_text(angle = 90)
+  ggsave(paste(plotsDir, "Log RA sample ID comp.pdf", sep = ""), plot, height = 20,
+         width = 20)
 
-plot <- ggboxplot(rmDataLongLog, x = "Site_ID", y = "Log_RA", color = "Sample Type")
-facet(plot, facet.by = "group", ncol = 3) + rotate_x_text(angle = 90)
+  plot <- ggboxplot(rmDataLongLog, x = "Sample Type", y = "Log_RA", color = "Location_ID")
+  facet(plot, facet.by = "group", ncol = 3) + rotate_x_text(angle = 90)
 
-#remove genes that had no detection across all samples or were only detected in 1-2 samples
-filterTab <- rmData[rowSums(rmData[, 4:ncol(rmData)], na.rm = TRUE) > 0, ]
+  ggsave(paste(plotsDir, "Log RA location ID comp.pdf", sep = ""), plot, height = 20,
+         width = 20)
+  
+  plot <- ggboxplot(rmDataLongLog, x = "Site_ID", y = "Log_RA", color = "Sample Type")
+  facet(plot, facet.by = "group", ncol = 3) + rotate_x_text(angle = 90)
 
-filterTabLong <- pivot_longer(filterTab, cols = starts_with("PAK"),
-                              names_to = "Sample_ID",
-                              values_to = "relative_abundance")
-filterTabLongLog <- mutate(filterTabLong, Log_RA = log10(filterTabLong$relative_abundance))
-filterTabLongLog <- full_join(filterTabLongLog, metaData, by = "Sample_ID")
+  ggsave(paste(plotsDir, "Log RA sample ID and type comp.pdf", sep = ""), plot, height = 20,
+         width = 20)
+  
+  #remove genes that had no detection across all samples or were only detected in 1-2 samples
+  filterTab <- rmData[rowSums(rmData[, 4:ncol(rmData)], na.rm = TRUE) > 0, ]
 
-#---- divide water and sediment
-waterfiltLongLog <- filter(filterTabLongLog, `Sample Type` != "River sediment")
-sedfiltLongLog <- filter(filterTabLongLog, `Sample Type` == "River sediment")
+  filterTabLong <- pivot_longer(filterTab, cols = starts_with("PAK"),
+                                names_to = "Sample_ID",
+                                values_to = "relative_abundance")
+  filterTabLongLog <- mutate(filterTabLong, Log_RA = log10(filterTabLong$relative_abundance))
+  filterTabLongLog <- full_join(filterTabLongLog, metaData, by = "Sample_ID")
 
-aggregateGenes <- aggregate(waterfiltLongLog$relative_abundance,
-                            by = list(waterfiltLongLog$gene), FUN = sum, na.rm = TRUE)
-waterfiltLongLog <- filter(waterfiltLongLog, gene %in% aggregateGenes$Group.1[aggregateGenes$x > 0])
+  # divide water and sediment
+  waterfiltLongLog <- filter(filterTabLongLog, `Sample Type` != "River sediment")
+  sedfiltLongLog <- filter(filterTabLongLog, `Sample Type` == "River sediment")
 
-aggregateGenes <- aggregate(sedfiltLongLog$relative_abundance,
-                            by = list(sedfiltLongLog$gene), FUN = sum, na.rm = TRUE)
-sedfiltLongLog <- filter(sedfiltLongLog, gene %in% aggregateGenes$Group.1[aggregateGenes$x > 0])
+  aggregateGenes <- aggregate(waterfiltLongLog$relative_abundance,
+                              by = list(waterfiltLongLog$gene), FUN = sum, na.rm = TRUE)
+  waterfiltLongLog <- filter(waterfiltLongLog, gene %in% aggregateGenes$Group.1[aggregateGenes$x > 0])
 
-#---- additional objects
-annColors <- list(
-  River = c(Jinnah = "lightcyan3", Korang = "lightpink2", Nurpur = "cyan2",
-            "Rawal Lake" = "burlywood1", Shahdara = "blue"),
-  `Sample Type` = c("River sediment" = "chocolate4" , "River water" = "skyblue"),
-  group = c(Integrons = "#3288bd", Aminoglycoside = "#1a1a1a", Sulfonamide ="#fdae61",
-            MGE = "#66c2a5",  "Beta-Lactam" = "#d53e4f", Other = "#e6f598" ,
-            Phenicol ="#ffffbf", Quinolone = "#fee08b", Trimethoprim ="#8c510a",
-            Tetracycline  ="#f46d43", "16S rRNA" = "deeppink", MDR = "grey49",
-            MLSB = "#abdda4", Vancomycin = "#9e0142"),
-  `River Location` = c(Upstream = "skyblue1",  Midstream = "slateblue4", Downstream = "violetred3"))
+  aggregateGenes <- aggregate(sedfiltLongLog$relative_abundance,
+                              by = list(sedfiltLongLog$gene), FUN = sum, na.rm = TRUE)
+  sedfiltLongLog <- filter(sedfiltLongLog, gene %in% aggregateGenes$Group.1[aggregateGenes$x > 0])
 
-colorRampPalette(c('#2166ac', '#67a9cf','#d1e5f0','#fddbc7', '#ef8a62','#b2182b'))
-colorRampPalette(c('#b2182b','#ef8a62','#fddbc7','#d1e5f0','#67a9cf','#2166ac'))
+  # additional objects
+  annColors <- list(
+    River = c(Jinnah = "lightcyan3", Korang = "lightpink2", Nurpur = "cyan2",
+              "Rawal Lake" = "burlywood1", Shahdara = "blue"),
+    `Sample Type` = c("River sediment" = "chocolate4" , "River water" = "skyblue"),
+    group = c(Integrons = "#3288bd", Aminoglycoside = "#1a1a1a", Sulfonamide ="#fdae61",
+              MGE = "#66c2a5",  "Beta-Lactam" = "#d53e4f", Other = "#e6f598" ,
+             Phenicol ="#ffffbf", Quinolone = "#fee08b", Trimethoprim ="#8c510a",
+             Tetracycline  ="#f46d43", "16S rRNA" = "deeppink", MDR = "grey49",
+             MLSB = "#abdda4", Vancomycin = "#9e0142"),
+    `River Location` = c(Upstream = "skyblue1",  Midstream = "slateblue4", Downstream = "violetred3"))
 
-filterTabLongLog %>%
-  arrange(group) %>%
-  tidyheatmap(
-    filterTabLongLog,
-    rows = gene,
-    columns =  Sample_ID,
-    values =  Log_RA,
-    #scale = "row",
-    color_legend_n = 6,
-    color_legend_min = -5,
-    color_legend_max = 1,
-    annotation_col = c(River, `Sample Type`, `River Location`),
-    annotation_row = c(group),
-    annotation_colors = annColors,
-    cluster_rows = clustRow,
-    cluster_cols = clustCol,
-    gaps_row = group,
-    filename = paste(plotsDir, "Heat map all cluster row ", clustRow, " col ",
-                     clustCol, ".pdf", sep = ""),
-    show_colnames = FALSE
-  )
+  colorRampPalette(c('#2166ac', '#67a9cf','#d1e5f0','#fddbc7', '#ef8a62','#b2182b'))
+  colorRampPalette(c('#b2182b','#ef8a62','#fddbc7','#d1e5f0','#67a9cf','#2166ac'))
 
-waterfiltLongLog %>%
-  arrange(group) %>%
-  tidyheatmap(
-    waterfiltLongLog,
-    rows = gene,
-    columns =  Sample_ID,
-    values =  Log_RA,
-    #scale = "row",
-    color_legend_n = 6,
-    color_legend_min = -5,
-    color_legend_max = 1,
-    annotation_col = c(`River Location`, River),
-    annotation_row = c(group),
-    annotation_colors = annColors,
-    cluster_rows = clustRow,
-    cluster_cols = clustCol,
-    gaps_row = group,
-    filename = paste(plotsDir, "Heat map water cluster row ", clustRow, " col ",
-                     clustCol, ".pdf", sep = ""),
-    show_colnames = FALSE
-  )
+  filterTabLongLog %>%
+    arrange(group) %>%
+    tidyheatmap(
+      filterTabLongLog,
+      rows = gene,
+      columns =  Sample_ID,
+      values =  Log_RA,
+      #scale = "row",
+      color_legend_n = 6,
+      color_legend_min = -5,
+      color_legend_max = 1,
+      annotation_col = c(River, `Sample Type`, `River Location`),
+      annotation_row = c(group),
+      annotation_colors = annColors,
+      cluster_rows = clustRow,
+      cluster_cols = clustCol,
+      gaps_row = group,
+      filename = paste(plotsDir, "Heat map all cluster row ", clustRow, " col ",
+                       clustCol, ".pdf", sep = ""),
+      show_colnames = FALSE
+    )
 
-sedfiltLongLog %>%
-  arrange(group) %>%
-  tidyheatmap(
-    sedfiltLongLog,
-    rows = gene,
-    columns =  Sample_ID,
-    values =  Log_RA,
-    #scale = "row",
-    color_legend_n = 6,
-    color_legend_min = -5,
-    color_legend_max = 1,
-    annotation_col = c(`River Location`, River),
-    annotation_row = c(group),
-    annotation_colors = annColors,
-    cluster_rows = clustRow,
-    cluster_cols = clustCol,
-    gaps_row = group,
-    filename = paste(plotsDir, "Heat map sediment cluster row ", clustRow, " col ",
-                     clustCol, ".pdf", sep = ""),
-    show_colnames = FALSE
-  )
+    tidyheatmap(
+      hmDataLongLog,
+      rows = ID,
+      columns =  Sample_ID,
+      values =  Log_RA,
+      #scale = "row",
+      color_legend_n = 6,
+      color_legend_min = -5,
+      color_legend_max = 1,
+      cluster_rows = TRUE,
+      cluster_cols = TRUE,
+      filename = "/Users/u1971521/Dropbox/Alberti/DataAnalysis/TestPlot6.pdf",
+      show_colnames = FALSE
+    )
 
-#--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    waterfiltLongLog %>%
+    arrange(group) %>%
+    tidyheatmap(
+      waterfiltLongLog,
+      rows = gene,
+      columns =  Sample_ID,
+      values =  Log_RA,
+      #scale = "row",
+      color_legend_n = 6,
+      color_legend_min = -5,
+      color_legend_max = 1,
+      annotation_col = c(`River Location`, River),
+      annotation_row = c(group),
+      annotation_colors = annColors,
+      cluster_rows = clustRow,
+      cluster_cols = clustCol,
+      gaps_row = group,
+      filename = paste(plotsDir, "Heat map water cluster row ", clustRow, " col ",
+                       clustCol, ".pdf", sep = ""),
+      show_colnames = FALSE
+    )
 
-#  ---- NMDS and PCoA / alpha diversity ----
-# CHECK THIS LINK https://www.rpubs.com/RGrieger/545184 for further details of these steps
+  sedfiltLongLog %>%
+    arrange(group) %>%
+    tidyheatmap(
+      sedfiltLongLog,
+      rows = gene,
+      columns =  Sample_ID,
+      values =  Log_RA,
+      #scale = "row",
+      color_legend_n = 6,
+      color_legend_min = -5,
+      color_legend_max = 1,
+      annotation_col = c(`River Location`, River),
+      annotation_row = c(group),
+      annotation_colors = annColors,
+      cluster_rows = clustRow,
+      cluster_cols = clustCol,
+      gaps_row = group,
+      filename = paste(plotsDir, "Heat map sediment cluster row ", clustRow, " col ",
+                       clustCol, ".pdf", sep = ""),
+      show_colnames = FALSE
+    )
+
+  #  NMDS and PCoA / alpha diversity ----
+  # CHECK THIS LINK https://www.rpubs.com/RGrieger/545184 for further details of these steps
 
 # Water only start
 

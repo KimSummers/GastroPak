@@ -12,7 +12,7 @@
 # 	qPCRFile            - file containing qPCR data
 #   metaDataFile        - file containing meta data about the samples
 #   waterReps           - Number of water dilutions
-#   faecallReps         - Number of faecal dilutions
+#   faecalReps          - Number of faecal dilutions
 #   plotsDir            - directory to store plots in
 
 # Version    Author       Date      Affiliation
@@ -37,6 +37,8 @@ ReadAndBarPlotHHSalmonellaCountsComp <- function(plateCountHHSSAFile,
   metaData <- read_csv(metaDataFile)
   metaData <- metaData[!is.na(metaData$`Sample code`), ]
 
+  qPCRData <- nameCols(qPCRData)
+  
   # Only want Salmonella faecal samples
   qPCRData <- qPCRData[(qPCRData$Target == "Salmonella") & (qPCRData$Season == "Household"), ]
 
@@ -44,9 +46,11 @@ ReadAndBarPlotHHSalmonellaCountsComp <- function(plateCountHHSSAFile,
   plateSSACountData <- numericCounts(plateSSACountData)
   plateBGACountData <- numericCounts(plateBGACountData)
 
+  # collate count data by species
   plateSSACountData <- coloursToSpeciesSSA(plateSSACountData)
   plateBGACountData <- coloursToSpeciesBGA(plateBGACountData)
 
+  # Ensure columns are correctly named
   plateBGACountData <- nameCols(plateBGACountData)
   plateSSACountData <- nameCols(plateSSACountData)
   qPCRData <- nameCols(qPCRData)
@@ -83,6 +87,7 @@ ReadAndBarPlotHHSalmonellaCountsComp <- function(plateCountHHSSAFile,
   plateCountCombData <- rbind(plateSSACountData[selSSACols],
                               plateBGACountData[selBGACols])
 
+  # Fill in missing data
   waterData <- plateCountCombData[plateCountCombData$SampleType == "Water", ]
   faecalData <- plateCountCombData[plateCountCombData$SampleType == "Stool", ]
 
@@ -90,6 +95,8 @@ ReadAndBarPlotHHSalmonellaCountsComp <- function(plateCountHHSSAFile,
   faecalData <- fixMissingData(faecalData, faecalReps)
 
   plateCountCombData <- rbind(waterData, faecalData)
+
+  # add metadata on households to plate count and qPCR data
   plateCountCombData <- addHouseholds(plateCountCombData, metaData)
 
   qPCRData <- addHouseholds(qPCRData, metaData)
@@ -109,12 +116,14 @@ ReadAndBarPlotHHSalmonellaCountsComp <- function(plateCountHHSSAFile,
 
   convertCols <- which(colnames(plateCountCombData) == "CfuCount")
 
+  # Average colony counts across dilutions
   subPlateData <- averageCounts(waterData, waterReps, rawData, convertCols,
                                 "Salmonella", "HH", TRUE)
   subPlateData <- rbind(subPlateData, averageCounts(faecalData, faecalReps,
                                                     rawData, convertCols,
                                                     "Salmonella", "HH", TRUE))
 
+  # Select the columns we need from the qPCR data
   qPCRData <- nameCols(qPCRData)
   qPCRFirstSelCols <- c(which(colnames(qPCRData) == "SampleID"),
                         which(colnames(qPCRData) == "SamplingSite"),
@@ -132,11 +141,13 @@ ReadAndBarPlotHHSalmonellaCountsComp <- function(plateCountHHSSAFile,
 
   colnames(qPCRSubData) <- colnames(subPlateData)
 
+  # combine colony counts and qPCR data
   subPlateData <- rbind(subPlateData, qPCRSubData)
 
   subPlateData$MeanCfu <- as.numeric(subPlateData$MeanCfu)
 
-  subPlateData <- subPlateData[order(as.numeric(substr(subPlateData$Household, 11, length(subPlateData$Household))),
+  subPlateData <- subPlateData[order(as.numeric(substr(subPlateData$Household, 11, 
+                                                       length(subPlateData$Household))),
                                      subPlateData$SampleType,
                                      subPlateData$SampleID), ]
   sampleNumbers <- unique(subPlateData$SampleID)

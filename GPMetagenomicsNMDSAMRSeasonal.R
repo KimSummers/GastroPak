@@ -11,7 +11,7 @@
 # 	abClassesFile         - file containing antibiotic class data
 #.  dataDir               - directory to save data in
 # 	categories            - which categories e.g. seasons should data be split into
-# 	sampleOrder           - Desired order for samples
+# 	season                - Desired season
 #   plotsDir              - directory to store plots in
 
 # 	normalisationFile     - file containing normalisation data
@@ -26,8 +26,9 @@
 # 1.00       J K Summers  26/03/24  Wellington Lab - School of Life Sciences - University of Warwick
 
 GPMetagenomicsNMDSAMRSeasonal <- function(metagenomicDataFile, metaDataFile,
-                                          riversFile, distMatrixFile, categories,
-                                          sampleOrder, plotsDir) {
+                                          riversFile, abClassesFile, 
+                                          distMatrixFile, categories,
+                                          season, plotsDir) {
   # Load necessary packages
   library(vegan)
   library(ggplot2)
@@ -37,7 +38,7 @@ GPMetagenomicsNMDSAMRSeasonal <- function(metagenomicDataFile, metaDataFile,
 
   # Read in data
   mgAMRWide <- read.csv(metagenomicDataFile, sep = "\t")
-  metaDataWide <- read.csv(metaDataFileMG)
+  metaDataWide <- read.csv(metaDataFile)
   abClasses <- read.csv(abClassesFile, sep = "\t")
 
   metaDataWide <- metaDataWide[metaDataWide$Sample_ID != "", ]
@@ -250,15 +251,20 @@ GPMetagenomicsNMDSAMRSeasonal <- function(metagenomicDataFile, metaDataFile,
   test1 <- adonis2(amr_dist~River, data = meta_dist, permutations = perm,
                    method = euclidean)
   # sig p=0.001
+  write.csv(test1, file = paste(dataDir, season, " ARG river sig.csv", sep = ""))
+
   test2 <- adonis2(amr_dist~River*RiverLocation, data = meta_dist, permutations=perm,
                    method = euclidean)
+  write.csv(test2, file = paste(dataDir, season, " ARG river and location sig.csv", sep = ""))
 
   test3 <- adonis2(amr_dist~RiverLocation, data = meta_dist, permutations=perm,
                    method = euclidean)
-
+  write.csv(test3, file = paste(dataDir, season, " ARG location sig.csv", sep = ""))
+  
   test4 <- adonis2(amr_dist~RiverLocation*River, data = meta_dist, permutations=perm,
                    method = euclidean)
-
+  write.csv(test4, file = paste(dataDir, season, " ARG location and river sig.csv", sep = ""))
+  
   # Run pairwise adonis tests (change location/month to check for each)
   # pairwise_adonis_results <- pairwise.perm.manova(amr_dist, wimp_wide_env$River_loc, nperm = 999, p.method = "bonferroni")
   # pairwise perm manova not working! can't find function

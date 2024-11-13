@@ -52,10 +52,12 @@ ReadAndBarPlotEnvEColiCountsComp <- function(plateCountEnvCSFile, plateCountEnvS
   plateSSACountData <- numericCounts(plateSSACountData)
   plateBGACountData <- numericCounts(plateBGACountData)
 
+  # collate count data by species
   plateCSCountData <- coloursToSpeciesCS(plateCSCountData)
   plateSSACountData <- coloursToSpeciesSSA(plateSSACountData)
   plateBGACountData <- coloursToSpeciesBGA(plateBGACountData)
 
+  # Ensure columns are correctly named
   plateCSCountData <- nameCols(plateCSCountData)
   plateSSACountData <- nameCols(plateSSACountData)
   plateBGACountData <- nameCols(plateBGACountData)
@@ -103,12 +105,14 @@ ReadAndBarPlotEnvEColiCountsComp <- function(plateCountEnvCSFile, plateCountEnvS
                               plateSSACountData[selSSACols],
                               plateBGACountData[selBGACols])
 
+  # Fill in missing data
   waterData <- plateCountCombData[plateCountCombData$SampleType == "Water", ]
   sedimentData <- plateCountCombData[plateCountCombData$SampleType == "Sediment", ]
 
   waterData <- fixMissingData(waterData, waterReps)
   sedimentData <- fixMissingData(sedimentData, sedimentReps)
 
+  # add metadata on rivers to plate count and qPCR data
   plateCountCombData <- rbind(waterData, sedimentData)
   plateCountCombData <- addRivers(plateCountCombData, metaData)
 
@@ -132,12 +136,14 @@ ReadAndBarPlotEnvEColiCountsComp <- function(plateCountEnvCSFile, plateCountEnvS
 
   convertCols <- which(colnames(plateCountCombData) == "CfuCount")
 
+  # Average colony counts across dilutions
   subPlateData <- averageCounts(waterData, waterReps, rawData, convertCols,
                                 "E.coli", "Env", TRUE)
   subPlateData <- rbind(subPlateData, averageCounts(sedimentData, sedimentReps,
                                                     rawData, convertCols,
                                                     "E.coli", "Env", TRUE))
 
+  # Select the columns we need from the qPCR data
   qPCRData <- nameCols(qPCRData)
   qPCRFirstSelCols <- c(which(colnames(qPCRData) == "SampleID"),
                         which(colnames(qPCRData) == "SamplingSite"),
@@ -154,6 +160,7 @@ ReadAndBarPlotEnvEColiCountsComp <- function(plateCountEnvCSFile, plateCountEnvS
                        rep(0, nrow(qPCRData)), rep(0, nrow(qPCRData)),
                        qPCRData[, qPCRSecondSelCols])
 
+  # combine colony counts and qPCR data
   if (nrow(qPCRData) > 0)
   {
     colnames(qPCRSubData) <- colnames(subPlateData)
@@ -176,7 +183,7 @@ ReadAndBarPlotEnvEColiCountsComp <- function(plateCountEnvCSFile, plateCountEnvS
 
   for (iType in 1:length(sampleTypes))
   {
-    bactSubData <- subCompEnvData(subPlateData, sampleType[iType])
+    bactSubData <- subCompEnvData(countData = subPlateData, sampleType = sampleType[iType])
 
     if (sampleTypes[iType] == "Water")
     {
@@ -186,11 +193,12 @@ ReadAndBarPlotEnvEColiCountsComp <- function(plateCountEnvCSFile, plateCountEnvS
       measureType = "V"
     }
 
-    BarPlotGastroPak(bactSubData, c("DS", "MS", "US"), "Media", "Env",
-                     paste("E coli counts", sampleTypes[iType]), "",
-                     c('darkblue', 'pink',  'lightgreen', 'gold', "lightgrey"),
-                     measureType, 3, plotsDir, paste("Env Comp EC ", season,
-                                               sampleTypes[iType]))
+    BarPlotGastroPak(graphData = bactSubData, xAxisLabels = c("DS", "MS", "US"), 
+                     plotType = "Media", dataType = "Env", 
+                     mainData = paste("E coli counts", sampleTypes[iType]), subData = "", 
+                     fillColours = c('darkblue', 'pink',  'lightgreen', 'gold', "lightgrey"), 
+                     weightOrVol = measureType, rowGraphs = 3, plotsDir = plotsDir, 
+                     plotTitle = paste("Env Comp EC ", season, sampleTypes[iType]))
   }
 
 }

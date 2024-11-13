@@ -29,6 +29,8 @@ GPMetagenomicsNMDSGenusHH <- function(metagenomicDataFile, metaDataFile, phylaFi
   metaDataWide <- read.csv(metaDataFile)
   phylas <- read.csv(phylaFile, sep = "\t", header = FALSE)
 
+
+  # name columns and remove prefixes from data
   colnames(phylas) <- c("Species", "Kingdom", "Phyla", "Class", "Order",
                         "Family", "Genus", "species")
   phylas$Genus <- sub("g__", "", phylas$Genus)
@@ -50,19 +52,25 @@ GPMetagenomicsNMDSGenusHH <- function(metagenomicDataFile, metaDataFile, phylaFi
   rownames(mgGenusWide) <- 1:nrow(mgGenusWide)
   mgGenusWide <- mgGenusWide %>% column_to_rownames("clade_name")
 
+  # ensure data is numeric
   for (iCol in 1:ncol(mgGenusWide))
   {
     mgGenusWide[, iCol] <- as.numeric(mgGenusWide[, iCol])
   }
 
+  # remove samples which have 0 for all genii
   mgGenusWide <- mgGenusWide[, colSums(mgGenusWide) > 0]
+  # only want household samples
   mgGenusWide <- mgGenusWide[, which(substr(colnames(mgGenusWide), 1, 3) == "PHS")]
 
+  # order the columns
   mgGenusWide <- mgGenusWide[, order(colnames(mgGenusWide))]
 
+  # want to have samples in rows and genus in columns
   mgGenusWide <- as.data.frame(t(mgGenusWide))
   rownames(mgGenusWide) <- sub("PHS0", "PHS_0", rownames(mgGenusWide))
 
+  # only want metadata for these samples
   metaDataWide <- metaDataWide[metaDataWide$Sample_ID %in% rownames(mgGenusWide), ]
 
   # transform to relative abundance
@@ -226,16 +234,21 @@ GPMetagenomicsNMDSGenusHH <- function(metagenomicDataFile, metaDataFile, phylaFi
   perm <- 999
   test1 <- adonis2(genus_dist~Household, data = meta_dist, permutations = perm,
                    method = euclidean)
+  write.csv(test1, file = paste(dataDir, "Genus HH household sig.csv", sep = ""))
+
   # sig p = 0.001
   test2 <- adonis2(genus_dist~Household*Location, data = meta_dist, permutations = perm,
                    method=euclidean)
+  write.csv(test2, file = paste(dataDir, " Genus HH household and location sig.csv", sep = ""))
+
   #River p = 0.001, Campaign p = 0.001, River * Campaign p = 0.001
   test3 <- adonis2(genus_dist~Location, data = meta_dist, permutations=perm,
                    method = euclidean)
-
+  write.csv(test2, file = paste(dataDir, " Genus HH location sig.csv", sep = ""))
+  
   # Run pairwise adonis tests (change location/month to check for each)
-  # pairwise_adonis_results <- pairwise.perm.manova(genus_dist, wimp_wide_env$River_loc, nperm = 999, p.method = "bonferroni")
-  # pairwise perm manova not working! can't find function
+  # pairwise_adonis_results <- pairwise.permmanova(genus_dist, wimp_wide_env$River_loc, nperm = 999, p.method = "bonferroni")
+  # pairwise permmanova not working! can't find function
   # View the results
   # print(pairwise_adonis_results)
 

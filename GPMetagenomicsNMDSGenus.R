@@ -37,7 +37,7 @@ GPMetagenomicsNMDSGenus <- function(metagenomicDataFile, metaDataFile, riversFil
 
   # Read in data
   mgGenusWide <- read.csv(metagenomicDataFile, sep = "\t")
-  metaDataWide <- read.csv(metaDataFileMG)
+  metaDataWide <- read.csv(metaDataFile)
   phylas <- read.csv(phylaFile, sep = "\t", header = FALSE)
 
   colnames(phylas) <- c("Species", "Kingdom", "Phyla", "Class", "Order",
@@ -77,7 +77,7 @@ GPMetagenomicsNMDSGenus <- function(metagenomicDataFile, metaDataFile, riversFil
 
   # preparing Genus data
   mgGenusWide[is.na(mgGenusWide)] <- 0
-  colnames(mgGenusWide) <- mgGenusWide[1, ]
+  # colnames(mgGenusWide) <- mgGenusWide[1, ]
   mgGenusWide <- mgGenusWide[2:nrow(mgGenusWide), ]
   rownames(mgGenusWide) <- 1:nrow(mgGenusWide)
   mgGenusWide <- mgGenusWide %>% column_to_rownames("clade_name")
@@ -112,7 +112,7 @@ GPMetagenomicsNMDSGenus <- function(metagenomicDataFile, metaDataFile, riversFil
   # Calculate distance matrix - make distance matrix data frame - write .csv
   genusDistMat <- vegdist(genus.rel, method = "bray")
   genusDistanceMatrix <- as.matrix(genusDistMat, labels = T)
-  write.csv(genusDistanceMatrix, paste(dataDir, "GenusDistMat.csv", sep = ""))
+  write.csv(genusDistanceMatrix, paste(plotsDir, "GenusDistMat.csv", sep = ""))
 
   # Running NMDS in vegan (metaMDS)
   genusNMS <- metaMDS(genusDistMat, distance = "bray", k = 2, maxit = 999,
@@ -120,7 +120,7 @@ GPMetagenomicsNMDSGenus <- function(metagenomicDataFile, metaDataFile, riversFil
   genusScores <- `sppscores<-`(genusNMS, mgGenusWide)
   genusCorrelation <- cor(mgGenusWide, genusNMS$points, use = "complete.obs",
                         method = "pearson")
-  write.csv(genusCorrelation, file = paste(dataDir, "genus_PearsonCor.csv", sep = ""))
+  write.csv(genusCorrelation, file = paste(plotsDir, "genus_PearsonCor.csv", sep = ""))
 
   # Shepards test/goodness of fit
   fitGoodness <- goodness(genusNMS)
@@ -379,17 +379,23 @@ GPMetagenomicsNMDSGenus <- function(metagenomicDataFile, metaDataFile, riversFil
   perm <- 999
   test1 <- adonis2(genus_dist~River, data = meta_dist, permutations = perm,
                    method = euclidean)
+  write.csv(test1, file = paste(plotsDir, " Genus river sig.csv", sep = ""))
+  
   # sig p = 0.001
   test2 <- adonis2(genus_dist~River*Campaign, data = meta_dist, permutations = perm,
                    method=euclidean)
+  write.csv(test2, file = paste(plotsDir, " Genus river and campaign sig.csv", sep = ""))
+
   #River p = 0.001, Campaign p = 0.001, River * Campaign p = 0.001
   test3 <- adonis2(genus_dist~Campaign, data = meta_dist, permutations=perm,
                    method = euclidean)
+  write.csv(test3, file = paste(plotsDir, " Genus campaign sig.csv", sep = ""))
   # sig p=0.001
 
   test8 <- adonis2(genus_dist~RiverLocation*Campaign*River, data = meta_dist, permutations=perm,
                    method = euclidean)
-
+  write.csv(test8, file = paste(plotsDir, " Genus location, campaign and river sig.csv", sep = ""))
+  
   # Run pairwise adonis tests (change location/month to check for each)
   # pairwise_adonis_results <- pairwise.perm.manova(genus_dist, wimp_wide_env$River_loc, nperm = 999, p.method = "bonferroni")
   # pairwise perm manova not working! can't find function
